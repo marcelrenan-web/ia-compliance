@@ -73,32 +73,7 @@ elif page == "Painel RH/Compliance":
 
         with col3:
             st.subheader("Evolução Temporal")
-            df_denuncias['data_mes'] = df_denuncias['data'].dt.to_period('M')
+            # Corrigido: converter Period em datetime
+            df_denuncias['data_mes'] = df_denuncias['data'].dt.to_period('M').dt.to_timestamp()
             contagem_temporal = df_denuncias['data_mes'].value_counts().sort_index().reset_index()
-            contagem_temporal.columns = ['Mês', 'Número de Casos']
-            fig_linha = px.line(contagem_temporal, x='Mês', y='Número de Casos', title='Número de Casos ao Longo do Tempo')
-            st.plotly_chart(fig_linha, use_container_width=True)
-
-        st.markdown("---")
-
-        # Registro de ações
-        st.header("Registro de Ações e Soluções")
-        st.markdown("Use esta seção para documentar o desfecho das denúncias e as medidas tomadas.")
-
-        denuncias_abertas = [101, 102, 103]
-        denuncia_id = st.selectbox("Selecione a Denúncia para Acompanhamento:", [""] + denuncias_abertas)
-
-        if denuncia_id:
-            st.subheader(f"Documentando Denúncia #{denuncia_id}")
-            status_denuncia = st.selectbox("Status da Apuração:", ["", "Verídica", "Não Verídica"])
-            medidas_tomadas = st.text_area("Descreva as medidas tomadas:", height=150)
-            tempo_solucao = st.number_input("Tempo de Solução (em dias):", min_value=0, step=1)
-            botao_salvar_acao = st.button("Salvar Registro")
-
-            if botao_salvar_acao:
-                st.success("✅ Ação registrada com sucesso!")
-
-    elif senha_digitada:
-        st.error("❌ Senha incorreta. Tente novamente.")
-    else:
-        st.info("Insira a senha para acessar o painel.")
+            contagem_te_
