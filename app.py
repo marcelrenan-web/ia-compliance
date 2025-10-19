@@ -32,10 +32,40 @@ if st.session_state.get("autenticado"):
     # Campo de seleção do setor
     setor = st.selectbox(
         "Selecione o setor relacionado ao fato:",
-        ("Engenharia", "Produção", "Marketing", "Recursos Humanos", "Financeiro", "Outros")
+        (
+            "Engenharia",
+            "Produção",
+            "Marketing",
+            "Recursos Humanos",
+            "Financeiro",
+            "Outros"
+        )
     )
 
     # Campo de seleção do tipo de assédio
     tipo_assedio = st.selectbox(
         "Tipo de ocorrência:",
-        ("Assédio Moral", "Assédio S
+        (
+            "Assédio Moral",
+            "Assédio Sexual",
+            "Racismo",
+            "Homofobia",
+            "Discriminação",
+            "Outros"
+        )
+    )
+
+    # Campo de texto para denúncia
+    denuncia_texto = st.text_area("Descreva o ocorrido:")
+
+    if st.button("Enviar Denúncia"):
+        st.success("✅ Denúncia enviada com sucesso!")
+        st.info("Sua identidade será preservada.")
+
+    st.markdown("---")
+    st.header("📊 Painel de Análise de Denúncias")
+
+    # -----------------------------
+    # SIMULAÇÃO DE DADOS
+    # -----------------------------
+    dados_denuncias = pd.DataFrame({
