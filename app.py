@@ -2,85 +2,98 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- Configuração da página ---
-st.set_page_config(page_title="IA Compliance - Denúncias Éticas", layout="wide")
+# -----------------------------
+# CONFIGURAÇÃO INICIAL
+# -----------------------------
+st.set_page_config(page_title="IA Assistente de Compliance", layout="wide")
 
-# --- Tela inicial: envio de denúncia ---
-st.title("📢 Canal de Denúncias Éticas Anônimas")
+# -----------------------------
+# LOGIN SIMPLES
+# -----------------------------
+st.title("🔒 IA Assistente de Compliance")
 
-st.write("""
-Este canal é **100% anônimo** e tem como objetivo promover um ambiente de trabalho ético, 
-seguro e respeitoso.  
-Preencha abaixo sua denúncia, descrevendo a situação da forma mais clara possível.
-""")
+# Login básico
+usuario = st.text_input("Usuário:")
+senha = st.text_input("Senha:", type="password")
 
-denuncia_texto = st.text_area("✍️ Descreva o ocorrido:")
-
-if st.button("Enviar denúncia"):
-    if denuncia_texto.strip():
-        st.success("✅ Denúncia enviada com sucesso! Obrigado por contribuir para um ambiente mais ético.")
-    else:
-        st.warning("⚠️ Por favor, descreva o ocorrido antes de enviar.")
-
-st.divider()
-
-# --- Tela de Login para acesso interno ---
-st.header("🔒 Acesso Restrito (Somente Equipe de Compliance)")
-
-usuario = st.text_input("Usuário")
-senha = st.text_input("Senha", type="password")
-
-usuario_correto = "admin"
-senha_correta = "1234"
-
-# --- Área restrita ---
 if st.button("Entrar"):
-    if usuario == usuario_correto and senha == senha_correta:
+    if usuario == "admin" and senha == "1234":
+        st.session_state["autenticado"] = True
         st.success("Login realizado com sucesso!")
-        
-        # Dados simulados de denúncias
-        dados_denuncias_simulacao = {
-            'Setor': ['Engenharia', 'Produção', 'Recursos Humanos', 'Logística', 'Qualidade', 'Produção', 'Engenharia', 'RH'],
-            'Gravidade': ['Alta', 'Média', 'Alta', 'Baixa', 'Média', 'Alta', 'Baixa', 'Média'],
-            'Status': ['Aberta', 'Em análise', 'Concluída', 'Aberta', 'Concluída', 'Aberta', 'Concluída', 'Em análise'],
-            'Data': pd.date_range('2025-01-01', periods=8, freq='M')
-        }
-
-        df = pd.DataFrame(dados_denuncias_simulacao)
-        st.subheader("📊 Painel de Indicadores de Ética")
-
-        # --- KPI Cards ---
-        total_casos = len(df)
-        casos_abertos = (df['Status'] == 'Aberta').sum()
-        concluidos = (df['Status'] == 'Concluída').sum()
-
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total de Casos", total_casos)
-        col2.metric("Casos Abertos", casos_abertos)
-        col3.metric("Casos Concluídos", concluidos)
-
-        # --- Gráficos ---
-        st.divider()
-        col4, col5 = st.columns(2)
-
-        # Gráfico 1 - Denúncias por Setor
-        with col4:
-            fig_setor = px.bar(df, x='Setor', title="Denúncias por Setor", color='Gravidade')
-            st.plotly_chart(fig_setor, use_container_width=True)
-
-        # Gráfico 2 - Evolução Temporal
-        with col5:
-            contagem_temporal = df.groupby(df['Data'].dt.strftime("%b"))['Setor'].count().reset_index()
-            contagem_temporal.columns = ['Mês', 'Número de Casos']
-
-            fig_linha = px.line(
-                contagem_temporal,
-                x='Mês',
-                y='Número de Casos',
-                markers=True,
-                title="Evolução das Denúncias ao Longo do Tempo"
-            )
-            st.plotly_chart(fig_linha, use_container_width=True)
-
     else:
         st.error("Usuário ou senha incorretos.")
+
+# -----------------------------
+# PÁGINA PRINCIPAL APÓS LOGIN
+# -----------------------------
+if st.session_state.get("autenticado"):
+
+    st.header("📢 Registrar Denúncia")
+
+    # Campos de entrada
+    setor = st.selectbox(
+        "Selecione o setor relacionado ao fato:",
+        ("Engenharia", "Produção", "Marketing", "Recursos Humanos", "Financeiro", "Outros")
+    )
+
+    denuncia_texto = st.text_area("Descreva o ocorrido:")
+
+    if st.button("Enviar Denúncia"):
+        st.success("✅ Denúncia enviada com sucesso!")
+        st.info("Sua identidade será preservada.")
+
+    st.markdown("---")
+    st.header("📊 Análise de Denúncias")
+
+    # Simulação de dados de denúncias
+    dados_denuncias = pd.DataFrame({
+        "Setor": [
+            "Engenharia", "Produção", "Marketing",
+            "Recursos Humanos", "Produção", "Financeiro",
+            "Engenharia", "Produção", "Outros", "Engenharia"
+        ],
+        "Mês": [
+            "Jan", "Jan", "Fev", "Fev", "Mar",
+            "Mar", "Abr", "Abr", "Mai", "Mai"
+        ]
+    })
+
+    # Contagem de denúncias por setor
+    contagem_setor = dados_denuncias["Setor"].value_counts().reset_index()
+    contagem_setor.columns = ["Setor", "Número de Casos"]
+
+    # Contagem temporal (por mês)
+    contagem_temporal = dados_denuncias["Mês"].value_counts().reset_index()
+    contagem_temporal.columns = ["Mês", "Número de Casos"]
+    contagem_temporal = contagem_temporal.sort_values("Mês")
+
+    # -----------------------------
+    # GRÁFICOS
+    # -----------------------------
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("📈 Evolução das Denúncias (Linha)")
+        fig_linha = px.line(
+            contagem_temporal,
+            x="Mês",
+            y="Número de Casos",
+            markers=True,
+            title="Denúncias ao Longo dos Meses"
+        )
+        st.plotly_chart(fig_linha, use_container_width=True)
+
+    with col2:
+        st.subheader("🥧 Distribuição por Setor (Pizza)")
+        fig_pizza = px.pie(
+            contagem_setor,
+            names="Setor",
+            values="Número de Casos",
+            title="Distribuição de Denúncias por Setor"
+        )
+        st.plotly_chart(fig_pizza, use_container_width=True)
+
+    # -----------------------------
+    # TABELA DE DADOS
+    # -----------------------------
+    st.subheader("📄 Base de Denúncias (Simula
