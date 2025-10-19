@@ -1,52 +1,52 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from datetime import datetime
 
-# --- Configuração da Página ---
-st.set_page_config(page_title="IA de Compliance", page_icon="🛡️", layout="wide")
+# --- Configurações da Página ---
+st.set_page_config(
+    page_title="IA de Compliance",
+    page_icon="🛡️",
+    layout="wide"
+)
 
-# --- Navegação ---
+# --- Barra lateral de navegação ---
 st.sidebar.title("Navegação")
 page = st.sidebar.radio("Selecione uma opção:", ["Página Inicial", "Painel RH/Compliance"])
 
-# --- Página Inicial ---
+# --- Página Inicial (Denúncias Anônimas) ---
 if page == "Página Inicial":
     st.title("🛡️ IA Assistente de Compliance")
     st.markdown("""
-    Sua voz é essencial para construirmos um ambiente de trabalho mais ético e seguro.
-    **Todas as denúncias são anônimas.** Sua identidade será totalmente protegida.
+    Sua voz é essencial para construirmos um ambiente de trabalho mais ético e seguro.  
+    **Todas as denúncias são anônimas.** Nenhum dado de identificação é solicitado.
     """)
     st.markdown("---")
 
-    # Formulário de denúncia
-    st.header("Formulário de Denúncia Anônima")
+    st.header("📋 Formulário de Denúncia Anônima")
+
     denuncia_texto = st.text_area("Descreva o ocorrido:", height=200)
     setor_escolhido = st.selectbox(
         "Selecione o setor onde ocorreu:",
         ("", "Engenharia", "Produção", "Marketing", "Recursos Humanos", "Financeiro", "Outro")
     )
+
     botao_enviar = st.button("Enviar Denúncia")
 
     if botao_enviar:
         if denuncia_texto and setor_escolhido:
-            tipo_denuncia = "Assédio Moral"  # Placeholder
-            st.success("✅ Sua denúncia foi enviada com sucesso! Obrigado pela colaboração.")
+            st.success("✅ Sua denúncia foi enviada com sucesso! Agradecemos sua colaboração.")
         else:
             st.warning("⚠️ Por favor, preencha todos os campos obrigatórios.")
 
-# --- Painel RH/Compliance ---
+# --- Página Painel RH/Compliance ---
 elif page == "Painel RH/Compliance":
-    st.subheader("🔒 Login RH/Compliance")
-    senha_digitada = st.text_input("Digite a senha de acesso:", type="password")
-    senha_correta = "12345"  # Substitua por uma senha segura
+    st.title("📊 Painel RH/Compliance")
+    st.markdown("---")
 
-    if senha_digitada == senha_correta:
-        st.success("✅ Acesso autorizado")
-        st.title("📊 Painel de Análise de Denúncias")
-        st.markdown("---")
+    # --- Login simples ---
+    st.subheader("🔐 Área Restrita")
+    senha_correta = "12345"  # Altere esta senha conforme desejar
+    senha = st.text_input("Digite a senha de acesso:", type="password")
 
-        # Dados de simulação
-        dados_denuncias_simulacao = {
-            'tipo_denuncia': ['Assédio Moral', 'Assédio Sexual', 'Racismo', 'Assédio Moral', 'Assédio Sexual', 'Homofobia', 'Assédio Moral'],
-            'setor': ['Engenharia', 'Prod]()
-
+    if senha == senha_cor_
