@@ -12,7 +12,6 @@ st.set_page_config(page_title="IA Assistente de Compliance", layout="wide")
 # -----------------------------
 st.title("🔒 IA Assistente de Compliance")
 
-# Login básico
 usuario = st.text_input("Usuário:")
 senha = st.text_input("Senha:", type="password")
 
@@ -24,18 +23,19 @@ if st.button("Entrar"):
         st.error("Usuário ou senha incorretos.")
 
 # -----------------------------
-# PÁGINA PRINCIPAL APÓS LOGIN
+# PÁGINA PRINCIPAL (APÓS LOGIN)
 # -----------------------------
 if st.session_state.get("autenticado"):
 
     st.header("📢 Registrar Denúncia")
 
-    # Campos de entrada
+    # Campo de seleção do setor
     setor = st.selectbox(
         "Selecione o setor relacionado ao fato:",
         ("Engenharia", "Produção", "Marketing", "Recursos Humanos", "Financeiro", "Outros")
     )
 
+    # Campo de texto para denúncia
     denuncia_texto = st.text_area("Descreva o ocorrido:")
 
     if st.button("Enviar Denúncia"):
@@ -45,7 +45,9 @@ if st.session_state.get("autenticado"):
     st.markdown("---")
     st.header("📊 Análise de Denúncias")
 
-    # Simulação de dados de denúncias
+    # -----------------------------
+    # SIMULAÇÃO DE DADOS
+    # -----------------------------
     dados_denuncias = pd.DataFrame({
         "Setor": [
             "Engenharia", "Produção", "Marketing",
@@ -58,11 +60,11 @@ if st.session_state.get("autenticado"):
         ]
     })
 
-    # Contagem de denúncias por setor
+    # Contagem por setor
     contagem_setor = dados_denuncias["Setor"].value_counts().reset_index()
     contagem_setor.columns = ["Setor", "Número de Casos"]
 
-    # Contagem temporal (por mês)
+    # Contagem por mês
     contagem_temporal = dados_denuncias["Mês"].value_counts().reset_index()
     contagem_temporal.columns = ["Mês", "Número de Casos"]
     contagem_temporal = contagem_temporal.sort_values("Mês")
@@ -96,4 +98,5 @@ if st.session_state.get("autenticado"):
     # -----------------------------
     # TABELA DE DADOS
     # -----------------------------
-    st.subheader("📄 Base de Denúncias (Simula
+    st.subheader("📄 Base de Denúncias (Simulada)")
+    st.dataframe(dados_denuncias, use_container_width=True)
