@@ -40,6 +40,4 @@ if page == "Página Inicial":
     denuncia_texto = st.text_area("Descreva o ocorrido:", height=200)
     setor_escolhido = st.selectbox(
         "Selecione o setor onde ocorreu:",
-        ("", "Engenharia", "Produção", "Marketing", "Recursos Humanos", "Financeiro", "Outro")
-    )
-    botao_enviar = st.button("Enviar Denúncia_
+        ("", "Engenharia", "Produção", "Marketing", "Recurs
