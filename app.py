@@ -32,27 +32,13 @@ if st.session_state.get("autenticado"):
     # Campo de seleção do setor
     setor = st.selectbox(
         "Selecione o setor relacionado ao fato:",
-        (
-            "Engenharia",
-            "Produção",
-            "Marketing",
-            "Recursos Humanos",
-            "Financeiro",
-            "Outros"
-        )
+        ("Engenharia", "Produção", "Marketing", "Recursos Humanos", "Financeiro", "Outros")
     )
 
     # Campo de seleção do tipo de assédio
     tipo_assedio = st.selectbox(
         "Tipo de ocorrência:",
-        (
-            "Assédio Moral",
-            "Assédio Sexual",
-            "Racismo",
-            "Homofobia",
-            "Discriminação",
-            "Outros"
-        )
+        ("Assédio Moral", "Assédio Sexual", "Racismo", "Homofobia", "Discriminação", "Outros")
     )
 
     # Campo de texto para denúncia
@@ -69,3 +55,11 @@ if st.session_state.get("autenticado"):
     # SIMULAÇÃO DE DADOS
     # -----------------------------
     dados_denuncias = pd.DataFrame({
+        "Setor": [
+            "Engenharia", "Produção", "Marketing",
+            "Recursos Humanos", "Produção", "Financeiro",
+            "Engenharia", "Produção", "Outros", "Engenharia"
+        ],
+        "Tipo": [
+            "Assédio Moral", "Assédio Sexual", "Racismo",
+            "Assédio Moral", "Homofobia", "Discriminação",
