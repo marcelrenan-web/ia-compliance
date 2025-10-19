@@ -31,10 +31,8 @@ if page == "Página Inicial":
     """)
     st.markdown("---")
 
-    # QR Code apontando automaticamente para a URL atual do app
+    # QR Code apontando automaticamente para a raiz do app
     st.subheader("📱 Acesse via QR Code")
-    gerar_qr_code(st.experimental_get_url())
-
-    # Formulário de denúncia
-    st.header("Formulário de Denúncia Anônima")
-    denuncia_texto = st.text_area("
+    try:
+        # Streamlit >=1.24.0
+        url_a_
