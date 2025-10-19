@@ -31,14 +31,38 @@ if page == "Página Inicial":
     """)
     st.markdown("---")
 
-    # QR Code apontando automaticamente para a raiz do app
+    # QR Code apontando para link público do app (substitua pelo seu link após deploy)
     st.subheader("📱 Acesse via QR Code")
-    try:
-        url_atual = st.experimental_get_url()  # Streamlit >=1.24.0
-    except:
-        url_atual = "."  # fallback caso não funcione
-    gerar_qr_code(url_atual)
+    gerar_qr_code("https://seu-usuario.streamlit.app")  # substitua pelo link do seu app
 
     # Formulário de denúncia
     st.header("Formulário de Denúncia Anônima")
-    denun
+    denuncia_texto = st.text_area("Descreva o ocorrido:", height=200)
+    setor_escolhido = st.selectbox(
+        "Selecione o setor onde ocorreu:",
+        ("", "Engenharia", "Produção", "Marketing", "Recursos Humanos", "Financeiro", "Outro")
+    )
+    botao_enviar = st.button("Enviar Denúncia")
+
+    if botao_enviar:
+        if denuncia_texto and setor_escolhido:
+            tipo_denuncia = "Assédio Moral"  # Placeholder
+            st.success("✅ Sua denúncia foi enviada com sucesso! Obrigado pela colaboração.")
+        else:
+            st.warning("⚠️ Por favor, preencha todos os campos obrigatórios.")
+
+# --- Painel RH/Compliance ---
+elif page == "Painel RH/Compliance":
+    st.subheader("🔒 Login RH/Compliance")
+    senha_digitada = st.text_input("Digite a senha de acesso:", type="password")
+    senha_correta = "12345"  # Substitua por senha segura
+
+    if senha_digitada == senha_correta:
+        st.success("✅ Acesso autorizado")
+        st.title("📊 Painel de Análise de Denúncias")
+        st.markdown("---")
+
+        # Dados de simulação
+        dados_denuncias_simulacao = {
+            'tipo_denuncia': ['Assédio Moral', 'Assédio Sexual', 'Racismo', 'Assédio Moral', 'Assédio Sexual', 'Homofobia', 'Assédio Moral'],
+            'setor': ['Engenharia', 'Produção', 'Marketing', 'Engenharia', 'Recursos Humanos', 'Engenharia', 'Financeiro'],
