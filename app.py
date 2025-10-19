@@ -1,22 +1,9 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import qrcode
-from io import BytesIO
 
 # --- Configuração da Página ---
-st.set_page_config(
-    page_title="IA de Compliance",
-    page_icon="🛡️",
-    layout="wide"
-)
-
-# --- Função para gerar QR Code ---
-def gerar_qr_code(url):
-    qr = qrcode.make(url)
-    buf = BytesIO()
-    qr.save(buf, format="PNG")
-    st.image(buf.getvalue(), caption="Aponte a câmera para acessar o formulário")
+st.set_page_config(page_title="IA de Compliance", page_icon="🛡️", layout="wide")
 
 # --- Navegação ---
 st.sidebar.title("Navegação")
@@ -30,10 +17,6 @@ if page == "Página Inicial":
     **Todas as denúncias são anônimas.** Sua identidade será totalmente protegida.
     """)
     st.markdown("---")
-
-    # QR Code apontando para link público do app (substitua pelo seu link após deploy)
-    st.subheader("📱 Acesse via QR Code")
-    gerar_qr_code("https://seu-usuario.streamlit.app")  # substitua pelo link do seu app
 
     # Formulário de denúncia
     st.header("Formulário de Denúncia Anônima")
@@ -55,7 +38,7 @@ if page == "Página Inicial":
 elif page == "Painel RH/Compliance":
     st.subheader("🔒 Login RH/Compliance")
     senha_digitada = st.text_input("Digite a senha de acesso:", type="password")
-    senha_correta = "12345"  # Substitua por senha segura
+    senha_correta = "12345"  # Substitua por uma senha segura
 
     if senha_digitada == senha_correta:
         st.success("✅ Acesso autorizado")
@@ -66,3 +49,56 @@ elif page == "Painel RH/Compliance":
         dados_denuncias_simulacao = {
             'tipo_denuncia': ['Assédio Moral', 'Assédio Sexual', 'Racismo', 'Assédio Moral', 'Assédio Sexual', 'Homofobia', 'Assédio Moral'],
             'setor': ['Engenharia', 'Produção', 'Marketing', 'Engenharia', 'Recursos Humanos', 'Engenharia', 'Financeiro'],
+            'data': pd.to_datetime(['2025-01-01', '2025-02-15', '2025-03-20', '2025-04-10', '2025-05-05', '2025-06-12', '2025-06-25'])
+        }
+        df_denuncias = pd.DataFrame(dados_denuncias_simulacao)
+
+        # --- Gráficos ---
+        st.header("Análise de Denúncias Recebidas")
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.subheader("Por Tipo de Assédio")
+            contagem_tipo = df_denuncias['tipo_denuncia'].value_counts().reset_index()
+            contagem_tipo.columns = ['Tipo de Assédio', 'Número de Casos']
+            fig_barras = px.bar(contagem_tipo, x='Tipo de Assédio', y='Número de Casos', color='Tipo de Assédio', title='Total de Casos por Tipo')
+            st.plotly_chart(fig_barras, use_container_width=True)
+
+        with col2:
+            st.subheader("Por Setor")
+            contagem_setor = df_denuncias['setor'].value_counts().reset_index()
+            contagem_setor.columns = ['Setor', 'Número de Casos']
+            fig_pizza = px.pie(contagem_setor, values='Número de Casos', names='Setor', title='Distribuição por Setor')
+            st.plotly_chart(fig_pizza, use_container_width=True)
+
+        with col3:
+            st.subheader("Evolução Temporal")
+            df_denuncias['data_mes'] = df_denuncias['data'].dt.to_period('M')
+            contagem_temporal = df_denuncias['data_mes'].value_counts().sort_index().reset_index()
+            contagem_temporal.columns = ['Mês', 'Número de Casos']
+            fig_linha = px.line(contagem_temporal, x='Mês', y='Número de Casos', title='Número de Casos ao Longo do Tempo')
+            st.plotly_chart(fig_linha, use_container_width=True)
+
+        st.markdown("---")
+
+        # Registro de ações
+        st.header("Registro de Ações e Soluções")
+        st.markdown("Use esta seção para documentar o desfecho das denúncias e as medidas tomadas.")
+
+        denuncias_abertas = [101, 102, 103]
+        denuncia_id = st.selectbox("Selecione a Denúncia para Acompanhamento:", [""] + denuncias_abertas)
+
+        if denuncia_id:
+            st.subheader(f"Documentando Denúncia #{denuncia_id}")
+            status_denuncia = st.selectbox("Status da Apuração:", ["", "Verídica", "Não Verídica"])
+            medidas_tomadas = st.text_area("Descreva as medidas tomadas:", height=150)
+            tempo_solucao = st.number_input("Tempo de Solução (em dias):", min_value=0, step=1)
+            botao_salvar_acao = st.button("Salvar Registro")
+
+            if botao_salvar_acao:
+                st.success("✅ Ação registrada com sucesso!")
+
+    elif senha_digitada:
+        st.error("❌ Senha incorreta. Tente novamente.")
+    else:
+        st.info("Insira a senha para acessar o painel.")
