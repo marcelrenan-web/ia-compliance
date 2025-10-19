@@ -63,3 +63,4 @@ if st.session_state.get("autenticado"):
         "Tipo": [
             "Assédio Moral", "Assédio Sexual", "Racismo",
             "Assédio Moral", "Homofobia", "Discriminação",
+            "Assédio Moral",
