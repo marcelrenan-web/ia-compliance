@@ -4,10 +4,4 @@ pandas
 numpy
 qrcode
 Pillow
-supabase
-pip install supabase
-supabase
-streamlit
-plotly
-pandas
-supabase
+supabase-py
