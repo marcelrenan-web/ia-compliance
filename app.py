@@ -120,7 +120,40 @@ if st.session_state['autenticado']:
         with col1:
             st.subheader("📊 Casos por Tipo de Ocorrência")
             fig_bar = px.bar(contagem_tipo, x='Tipo de Ocorrência', y='Número de Casos', color='Tipo de Ocorrência')
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar, use_container_width=True)import streamlit as st
+from utils.session import verificar_login
+from utils.layout import aplicar_layout
+from services.auth import realizar_logout
+
+st.set_page_config(
+    page_title="Portal Vigia Ético",
+    page_icon="🛡️",
+    layout="wide"
+)
+
+aplicar_layout()
+
+# Verificar sessão
+usuario_logado = verificar_login()
+
+st.sidebar.markdown("## 🛡️ Portal Vigia Ético")
+
+if usuario_logado:
+    st.sidebar.success(f"Bem-vindo, {usuario_logado['email']}")
+    if st.sidebar.button("Sair"):
+        realizar_logout()
+        st.rerun()
+
+st.title("Portal Vigia Ético")
+st.write("Bem-vindo ao sistema de denúncias anônimas com análise de sentimento.")
+
+st.markdown("""
+### O que você pode fazer:
+- Enviar denúncias de forma anônima  
+- Analisar denúncias recebidas  
+- Visualizar métricas e sentimentos  
+""")
+
 
         with col2:
             st.subheader("🥧 Distribuição por Setor")
