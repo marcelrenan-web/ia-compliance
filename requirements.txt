@@ -4,3 +4,5 @@ pandas
 numpy
 qrcode
 Pillow
+supabase
+pip install supabase
