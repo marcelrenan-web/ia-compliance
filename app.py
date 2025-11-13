@@ -1,57 +1,40 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import sqlite3
 from datetime import datetime
-
-# Nome do arquivo do banco de dados (será criado na pasta do projeto)
-DB_NAME = "denuncias.db"
+from supabase import create_client, Client
 
 # -----------------------------
-# FUNÇÕES DE GERENCIAMENTO DO BANCO DE DADOS
+# CONFIGURAÇÕES DO SUPABASE
 # -----------------------------
+SUPABASE_URL = "https://SEU-PROJETO.supabase.co"  # substitua
+SUPABASE_KEY = "SUA-CHAVE-API"  # substitua
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def get_db_connection():
-    """Estabelece a conexão com o banco de dados."""
-    return sqlite3.connect(DB_NAME)
-
-def init_db():
-    """Cria a tabela de denúncias se ela não existir."""
-    conn = get_db_connection()
-    c = conn.cursor()
-    c.execute("""CREATE TABLE IF NOT EXISTS denuncias (
-                id INTEGER PRIMARY KEY,
-                setor TEXT,
-                tipo_ocorrencia TEXT,
-                descricao TEXT,
-                data_envio TIMESTAMP
-            )""")
-    conn.commit()
-    conn.close()
-
+# -----------------------------
+# FUNÇÕES DE BANCO DE DADOS
+# -----------------------------
 def insert_denuncia(setor, tipo_ocorrencia, descricao):
-    """Insere uma nova denúncia no banco de dados."""
-    conn = get_db_connection()
-    c = conn.cursor()
-    data_envio = datetime.now()
-    c.execute("INSERT INTO denuncias (setor, tipo_ocorrencia, descricao, data_envio) VALUES (?, ?, ?, ?)",
-              (setor, tipo_ocorrencia, descricao, data_envio))
-    conn.commit()
-    conn.close()
+    """Insere nova denúncia na tabela Supabase."""
+    data_envio = datetime.now().isoformat()
+    denuncia = {
+        "setor": setor,
+        "tipo": tipo_ocorrencia,
+        "descricao": descricao,
+        "data_envio": data_envio
+    }
+    supabase.table("denuncias").insert(denuncia).execute()
 
 def fetch_denuncias():
-    """Lê todas as denúncias e retorna um DataFrame."""
-    conn = get_db_connection()
-    # Utiliza pandas para ler diretamente para um DataFrame
-    df = pd.read_sql_query("SELECT * FROM denuncias", conn)
-    conn.close()
-    return df
-
-# Chama a inicialização do DB uma vez (no carregamento inicial do script)
-init_db()
+    """Lê todas as denúncias do Supabase."""
+    response = supabase.table("denuncias").select("*").execute()
+    if response.data:
+        return pd.DataFrame(response.data)
+    else:
+        return pd.DataFrame()
 
 # -----------------------------
-# CONFIGURAÇÃO INICIAL
+# INTERFACE STREAMLIT
 # -----------------------------
 st.set_page_config(page_title="IA Assistente de Compliance", layout="wide")
 st.title("🔒 IA Assistente de Compliance")
@@ -59,7 +42,6 @@ st.title("🔒 IA Assistente de Compliance")
 # -----------------------------
 # LOGIN SIMPLES
 # -----------------------------
-# (Seu código de login permanece o mesmo)
 if 'autenticado' not in st.session_state:
     st.session_state['autenticado'] = False
 
@@ -68,7 +50,6 @@ with st.sidebar:
     usuario = st.text_input("Usuário:")
     senha = st.text_input("Senha:", type="password")
     if st.button("Entrar"):
-        # Se você for usar autenticação real, não use credenciais hardcoded
         if usuario == "admin" and senha == "1234":
             st.session_state['autenticado'] = True
             st.success("Login realizado com sucesso!")
@@ -76,7 +57,7 @@ with st.sidebar:
             st.error("Usuário ou senha incorretos.")
 
 # -----------------------------
-# FORMULÁRIO DE DENÚNCIA (ANÔNIMO)
+# FORMULÁRIO DE DENÚNCIA
 # -----------------------------
 st.header("📢 Registrar Denúncia Anônima")
 
@@ -95,7 +76,6 @@ with st.form("denuncia_form"):
         if descricao.strip() == "":
             st.warning("Por favor, descreva o ocorrido.")
         else:
-            # CHAVE: Chamada à função de inserção
             insert_denuncia(setor, tipo_assedio, descricao)
             st.success("✅ Denúncia enviada com sucesso! Sua identidade será preservada.")
 
@@ -106,43 +86,34 @@ if st.session_state['autenticado']:
     st.markdown("---")
     st.header("📊 Painel de Análise de Denúncias")
 
-    # CHAVE: Chamada à função de leitura
     df = fetch_denuncias()
 
     if not df.empty:
-        # ... (O restante do código de gráficos e dataframe permanece o mesmo) ...
-
-        # Contagens para gráficos
-        contagem_tipo = df['tipo_ocorrencia'].value_counts().reset_index()
+        contagem_tipo = df['tipo'].value_counts().reset_index()
         contagem_tipo.columns = ['Tipo de Ocorrência', 'Número de Casos']
 
         contagem_setor = df['setor'].value_counts().reset_index()
         contagem_setor.columns = ['Setor', 'Número de Casos']
 
-        # Garantindo que a coluna data_envio está em datetime para manipulação
         df['data_envio'] = pd.to_datetime(df['data_envio'])
         df['Mês'] = df['data_envio'].dt.to_period('M').astype(str)
         contagem_temporal = df['Mês'].value_counts().sort_index().reset_index()
         contagem_temporal.columns = ['Mês', 'Número de Casos']
 
-        # Gráficos
         col1, col2 = st.columns(2)
-
         with col1:
             st.subheader("📊 Casos por Tipo de Ocorrência")
             fig_bar = px.bar(contagem_tipo,
                              x='Tipo de Ocorrência',
                              y='Número de Casos',
-                             color='Tipo de Ocorrência',
-                             title="Distribuição de Casos por Tipo")
+                             color='Tipo de Ocorrência')
             st.plotly_chart(fig_bar, use_container_width=True)
 
         with col2:
             st.subheader("🥧 Distribuição por Setor")
             fig_pizza = px.pie(contagem_setor,
                                names='Setor',
-                               values='Número de Casos',
-                               title="Denúncias por Setor")
+                               values='Número de Casos')
             st.plotly_chart(fig_pizza, use_container_width=True)
 
         st.markdown("---")
@@ -150,14 +121,11 @@ if st.session_state['autenticado']:
         fig_linha = px.line(contagem_temporal,
                             x='Mês',
                             y='Número de Casos',
-                            markers=True,
-                            title="Denúncias Registradas por Mês")
+                            markers=True)
         st.plotly_chart(fig_linha, use_container_width=True)
 
         st.markdown("---")
         st.subheader("📄 Base de Denúncias")
-        st.dataframe(df.drop(columns=['id']), use_container_width=True)
+        st.dataframe(df, use_container_width=True)
     else:
         st.info("Nenhuma denúncia registrada ainda.")
-
-# Não precisamos mais do conn.close() no final, pois cada função fecha sua própria conexão.
