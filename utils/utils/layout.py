@@ -4,18 +4,23 @@ def aplicar_layout():
     st.markdown(
         """
         <style>
-            /* Cor de fundo */
-            .main {
+            /* Fundo da área principal */
+            .stApp {
                 background-color: #f5f7fa;
             }
 
-            /* Caixa dos inputs */
-            .stTextInput > div > div > input,
-            .stTextArea textarea,
-            .stSelectbox select {
+            /* Inputs de texto */
+            input[type="text"], textarea {
                 border-radius: 12px !important;
                 border: 1px solid #c8d1dc !important;
                 padding: 10px !important;
+            }
+
+            /* Selectbox (ajuste moderno para Streamlit) */
+            div[data-baseweb="select"] > div {
+                border-radius: 12px !important;
+                border: 1px solid #c8d1dc !important;
+                padding: 5px !important;
             }
 
             /* Botões */
