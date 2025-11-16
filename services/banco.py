@@ -1,4 +1,4 @@
-from services.supabase_client import supabase
+from supabase.supabase_client import supabase
 from datetime import datetime
 import uuid
 
