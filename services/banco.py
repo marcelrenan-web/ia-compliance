@@ -1,20 +1,18 @@
-# services/banco.py
+from services.supabase_client import supabase
 from datetime import datetime
 import uuid
-import pandas as pd
-from services.supabase_client import get_supabase_or_raise
 
 TABLE_NAME = "denuncias"
 
-def insert_denuncia(setor, tipo_ocorrencia, descricao):
-    supabase = get_supabase_or_raise()
-    codigo = str(uuid.uuid4())[:8].upper()
+def insert_denuncia(setor, tipo, descricao, sentimento="Neutro"):
     data = {
-        "id": codigo,
+        "sua_id": str(uuid.uuid4()),   # gera ID único
         "setor": setor,
-        "tipo_ocorrencia": tipo_ocorrencia,
+        "tipo": tipo,
         "descricao": descricao,
-        "data_envio": datetime.utcnow().isoformat()
+        "sentimento": sentimento,
+        "data_servico": datetime.utcnow().isoformat()
     }
+
     supabase.table(TABLE_NAME).insert(data).execute()
-    return codigo
+    return data["sua_id"]
