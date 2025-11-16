@@ -1,6 +1,6 @@
 import streamlit as st
 from services.auth import ensure_logged_in
-from services.supabase_client import supabase
+from supabase.supabase_client import supabase
 import pandas as pd
 
 # ---------------------------------------------------------
