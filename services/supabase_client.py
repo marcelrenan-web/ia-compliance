@@ -1,16 +1,23 @@
 import streamlit as st
-import os
-from supabase import create_client, Client
 
-# Prefer st.secrets (Streamlit Cloud), fallback para env vars (local)
-try:
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-except Exception:
-    SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+def login_screen():
+    st.title("🔐 Login - Portal Vigia Ético")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError("Supabase credentials not found. Configure SUPABASE_URL and SUPABASE_KEY in Streamlit secrets or environment variables.")
+    username = st.text_input("Usuário")
+    password = st.text_input("Senha", type="password")
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    if st.button("Entrar"):
+        if username == "admin" and password == "1234":
+            st.session_state["logged"] = True
+            st.session_state["user"] = username
+        else:
+            st.error("Credenciais inválidas.")
+
+def require_login():
+    """Impede acesso às páginas privadas se não estiver logado."""
+    if "logged" not in st.session_state:
+        st.session_state["logged"] = False
+
+    if st.session_state["logged"] is False:
+        login_screen()
+        st.stop()
