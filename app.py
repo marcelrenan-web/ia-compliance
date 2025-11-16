@@ -1,27 +1,23 @@
 import streamlit as st
-from utils.layout import aplicar_layout
-from utils.sessao import is_logged_in, logout_user
 
-st.set_page_config(page_title="Portal Vigia Ético", page_icon="🛡️", layout="wide")
-aplicar_layout()
+# --- LOGIN SIMPLES (protótipo) ---
+def check_password():
+    # Se já está logado, não pede senha de novo
+    if "logged_in" in st.session_state and st.session_state["logged_in"]:
+        return True
 
-st.sidebar.image("logo.svg", width=140)  # coloque logo.svg na raiz (opcional)
-st.sidebar.markdown("### Portal Vigia Ético")
+    st.title("Login do Sistema de Denúncias")
 
-# Menu simples de navegação
-st.sidebar.markdown("---")
-st.sidebar.markdown("**Navegação**")
-st.sidebar.write("[Registrar denúncia](./pages/1_Registrar_Denuncia.py)")
-st.sidebar.write("[Painel RH (login)](./pages/2_Painel_Analise.py)")
-st.sidebar.markdown("---")
+    # Formulário de login
+    username = st.text_input("Usuário")
+    password = st.text_input("Senha", type="password")
 
-# se estiver logado, mostra botão de logout
-if is_logged_in():
-    st.sidebar.success(f"Logado como: {st.session_state['auth_user']['email']}")
-    if st.sidebar.button("Sair"):
-        logout_user()
-        st.experimental_rerun()
+    # Botão de login
+    if st.button("Entrar"):
+        if username == "admin" and password == "1234":
+            st.session_state["logged_in"] = True
+            st.rerun()  # força atualizar a página já logado
+        else:
+            st.error("Usuário ou senha incorretos.")
 
-st.title("🛡️ Portal Vigia Ético")
-st.markdown("Bem-vindo! Use o menu lateral para enviar uma denúncia (público) ou acessar o painel (RH).")
-
+    return False
