@@ -1,5 +1,5 @@
 import streamlit as st
-from services.banco import insert_denuncia
+from supabase.banco import insert_denuncia
 from utils.layout import aplicar_layout
 
 aplicar_layout()
