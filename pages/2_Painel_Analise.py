@@ -1,45 +1,92 @@
-from auth import require_login
 import streamlit as st
-
-require_login()  # <- isso força login antes do conteúdo privado
-
-st.title("Painel de Análises")
-
-import streamlit as st
-import plotly.express as px
-from services.banco import fetch_denuncias
 from services.auth import ensure_logged_in
-from utils.layout import aplicar_layout
+from services.supabase_client import supabase
+import pandas as pd
 
-aplicar_layout()
-# exige autenticação
+# ---------------------------------------------------------
+# AUTENTICAÇÃO (somente RH / Compliance)
+# ---------------------------------------------------------
 if not ensure_logged_in():
     st.stop()
 
-st.title("📊 Painel RH / Compliance")
+st.title("📊 Painel de Análise de Denúncias")
 
-df = fetch_denuncias()
+st.markdown("""
+Este painel permite visualizar todas as denúncias registradas no sistema,
+com filtros por setor, tipo e busca por palavras-chave.
+""")
+
+# ---------------------------------------------------------
+# LER DADOS DO SUPABASE
+# ---------------------------------------------------------
+def load_data():
+    try:
+        result = supabase.table("denuncias").select("*").execute()
+        return pd.DataFrame(result.data)
+    except Exception as e:
+        st.error("Erro ao carregar dados do Supabase.")
+        st.write(str(e))
+        return pd.DataFrame()
+
+df = load_data()
+
 if df.empty:
-    st.info("Nenhuma denúncia registrada.")
+    st.warning("Nenhum registro encontrado.")
+    st.stop()
+
+# Convertendo timestamp para datetime
+if "data_servico" in df.columns:
+    df["data_servico"] = pd.to_datetime(df["data_servico"])
+
+# ---------------------------------------------------------
+# FILTROS
+# ---------------------------------------------------------
+st.subheader("🔍 Filtros")
+
+col1, col2, col3 = st.columns(3)
+
+# Filtro por setor
+setores = ["Todos"] + sorted(df["setor"].dropna().unique().tolist())
+f_setor = col1.selectbox("Filtrar por setor", setores)
+
+# Filtro por tipo
+tipos = ["Todos"] + sorted(df["tipo"].dropna().unique().tolist())
+f_tipo = col2.selectbox("Filtrar por tipo de ocorrência", tipos)
+
+# Busca textual
+f_busca = col3.text_input("Buscar por palavras na descrição")
+
+# Aplicando filtros
+df_filtrado = df.copy()
+
+if f_setor != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["setor"] == f_setor]
+
+if f_tipo != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["tipo"] == f_tipo]
+
+if f_busca:
+    df_filtrado = df_filtrado[df_filtrado["descricao"].str.contains(f_busca, case=False, na=False)]
+
+st.write("### 📄 Registros Encontrados:", len(df_filtrado))
+
+# ---------------------------------------------------------
+# TABELA DE RESULTADOS
+# ---------------------------------------------------------
+st.dataframe(
+    df_filtrado.sort_values(by="data_servico", ascending=False),
+    use_container_width=True,
+)
+
+# ---------------------------------------------------------
+# GRÁFICO DE SENTIMENTOS (opcional)
+# ---------------------------------------------------------
+st.subheader("📈 Distribuição de Sentimentos")
+
+if "sentimento" in df.columns:
+    sentimento_count = df_filtrado["sentimento"].value_counts()
+
+    st.bar_chart(sentimento_count)
 else:
-    # preparo
-    df["data_envio"] = st.to_datetime(df["data_envio"])
-    st.subheader("Base de denúncias")
-    st.dataframe(df, use_container_width=True)
-
-    st.markdown("---")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("Casos por Tipo")
-        ct = df["tipo_ocorrencia"].value_counts().reset_index()
-        ct.columns = ["Tipo", "Quantidade"]
-        fig1 = px.bar(ct, x="Tipo", y="Quantidade", title="Casos por Tipo")
-        st.plotly_chart(fig1, use_container_width=True, key="fig_tipo")
-
-    with col2:
-        st.subheader("Distribuição por Setor")
-        cs = df["setor"].value_counts().reset_index()
-        cs.columns = ["Setor", "Quantidade"]
-        fig2 = px.pie(cs, names="Setor", values="Quantidade", title="Por Setor")
-        st.plotly_chart(fig2, use_container_width=True, key="fig_setor")
+    st.info("Nenhum dado de sentimento encontrado.")
+ey="fig_setor")
