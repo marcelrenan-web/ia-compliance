@@ -1,5 +1,5 @@
 import streamlit as st
-from supabase.banco import insert_denuncia
+from services.banco import insert_denuncia
 from utils.layout import aplicar_layout
 
 aplicar_layout()
@@ -15,6 +15,10 @@ if enviado:
     if descricao.strip() == "":
         st.warning("Por favor, descreva o ocorrido.")
     else:
-        codigo = insert_denuncia(setor, tipo, descricao)
-        st.success(f"✅ Denúncia registrada! Código de acompanhamento: **{codigo}**")
-        st.info("Anote o código para acompanhar o caso.")
+        try:
+            codigo = insert_denuncia(setor, tipo, descricao)
+            st.success(f"✅ Denúncia registrada! Código de acompanhamento: **{codigo}**")
+            st.info("Anote o código para acompanhar o caso.")
+        except Exception as e:
+            st.error("Erro ao registrar denúncia. Verifique as credenciais do Supabase.")
+            st.write(str(e))
