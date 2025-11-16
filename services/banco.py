@@ -2,7 +2,7 @@ from services.supabase_client import get_supabase_or_raise
 from datetime import datetime
 import uuid
 
-TABLE_NAME = "denuncias"  # nome exato no Supabase
+TABLE_NAME = "Denuncia"  # nome exato no Supabase
 
 def insert_denuncia(setor, tipo, descricao, sentimento="Neutro"):
 
