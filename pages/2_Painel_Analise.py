@@ -1,6 +1,6 @@
 import streamlit as st
 from services.auth import ensure_logged_in
-from supabase.supabase_client import supabase
+from services.supabase_client import supabase  # ✔ CORRIGIDO
 import pandas as pd
 
 # ---------------------------------------------------------
@@ -34,9 +34,9 @@ if df.empty:
     st.warning("Nenhum registro encontrado.")
     st.stop()
 
-# Convertendo timestamp para datetime
+# Convertendo timestamp
 if "data_servico" in df.columns:
-    df["data_servico"] = pd.to_datetime(df["data_servico"])
+    df["data_servico"] = pd.to_datetime(df["data_servico"], errors="coerce")
 
 # ---------------------------------------------------------
 # FILTROS
@@ -62,7 +62,9 @@ if f_tipo != "Todos":
     df_filtrado = df_filtrado[df_filtrado["tipo"] == f_tipo]
 
 if f_busca:
-    df_filtrado = df_filtrado[df_filtrado["descricao"].str.contains(f_busca, case=False, na=False)]
+    df_filtrado = df_filtrado[
+        df_filtrado["descricao"].str.contains(f_busca, case=False, na=False)
+    ]
 
 st.write("### 📄 Registros Encontrados:", len(df_filtrado))
 
@@ -79,7 +81,7 @@ st.dataframe(
 # ---------------------------------------------------------
 st.subheader("📈 Distribuição de Sentimentos")
 
-if "sentimento" in df.columns:
+if "sentimento" in df_filtrado.columns:
     sentimento_count = df_filtrado["sentimento"].value_counts()
     st.bar_chart(sentimento_count)
 else:
