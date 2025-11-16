@@ -45,18 +45,14 @@ st.subheader("🔍 Filtros")
 
 col1, col2, col3 = st.columns(3)
 
-# Filtro por setor
 setores = ["Todos"] + sorted(df["setor"].dropna().unique().tolist())
 f_setor = col1.selectbox("Filtrar por setor", setores)
 
-# Filtro por tipo
 tipos = ["Todos"] + sorted(df["tipo"].dropna().unique().tolist())
-f_tipo = col2.selectbox("Filtrar por tipo de ocorrência", tipos)
+f_tipo = col2.selectbox("Filtrar por tipo", tipos)
 
-# Busca textual
-f_busca = col3.text_input("Buscar por palavras na descrição")
+f_busca = col3.text_input("Busca por palavras na descrição")
 
-# Aplicando filtros
 df_filtrado = df.copy()
 
 if f_setor != "Todos":
@@ -79,14 +75,12 @@ st.dataframe(
 )
 
 # ---------------------------------------------------------
-# GRÁFICO DE SENTIMENTOS (opcional)
+# GRÁFICO DE SENTIMENTOS
 # ---------------------------------------------------------
 st.subheader("📈 Distribuição de Sentimentos")
 
 if "sentimento" in df.columns:
     sentimento_count = df_filtrado["sentimento"].value_counts()
-
     st.bar_chart(sentimento_count)
 else:
     st.info("Nenhum dado de sentimento encontrado.")
-ey="fig_setor")
