@@ -1,3 +1,10 @@
+from auth import require_login
+import streamlit as st
+
+require_login()  # <- isso força login antes do conteúdo privado
+
+st.title("Painel de Análises")
+
 import streamlit as st
 import plotly.express as px
 from services.banco import fetch_denuncias
