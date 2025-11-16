@@ -1,10 +1,13 @@
-from supabase.supabase_client import supabase
+from services.supabase_client import get_supabase_or_raise
 from datetime import datetime
 import uuid
 
-TABLE_NAME = "denuncias"  # Nome real no Supabase
+TABLE_NAME = "denuncias"  # nome exato no Supabase
 
 def insert_denuncia(setor, tipo, descricao, sentimento="Neutro"):
+
+    supabase = get_supabase_or_raise()
+
     data = {
         "sua_id": str(uuid.uuid4()),
         "setor": setor,
@@ -15,4 +18,5 @@ def insert_denuncia(setor, tipo, descricao, sentimento="Neutro"):
     }
 
     supabase.table(TABLE_NAME).insert(data).execute()
+
     return data["sua_id"]
