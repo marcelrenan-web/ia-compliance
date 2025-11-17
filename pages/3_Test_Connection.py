@@ -27,15 +27,15 @@ try:
     supabase = get_supabase_or_raise()
 
     # 2. Executar uma consulta de teste
-    # CORREÇÃO CRÍTICA: O nome da tabela deve ser 'Denuncias' (Case Sensitive!)
     TABLE_NAME = "Denuncias" 
     
-    # A consulta agora usa o nome da tabela com a capitalização correta
+    # A consulta agora usa o nome da tabela com a capitalização correta.
+    # O comando execute() irá levantar uma exceção se a conexão falhar.
     res = supabase.table(TABLE_NAME).select("*").limit(1).execute()
     
     # Se a execução for bem-sucedida, a conexão está ok
     st.success(f"✅ Conexão com Supabase e acesso à tabela '{TABLE_NAME}' bem-sucedidos!")
-    st.write("Status do resultado da consulta:", res.status_code)
+    st.write("Dados encontrados (Apenas a primeira linha):", res.data) # Acessa a lista de dados
     
 except Exception as e:
     st.error("Erro ao conectar no Supabase ou ao consultar a tabela")
