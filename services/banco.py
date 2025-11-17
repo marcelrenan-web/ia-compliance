@@ -7,7 +7,7 @@ from typing import List, Dict, Any
 # Nome exato da sua tabela no Supabase
 TABLE_NAME = "Denuncias" 
 
-def insert_denuncia(setor: str, tipo: str, descricao: str, data_servico: date, sentimento: str) -> str:
+def insert_denuncia(setor: str, tipo: str, descricao: str, data_servico: date, sentimento: str = "Neutro") -> str: # CORREÇÃO: 'sentimento' agora tem um valor padrão para evitar erro de argumento ausente.
     """Insere uma nova denúncia no Supabase."""
     try:
         supabase = get_supabase_or_raise() # Garante que o cliente existe
