@@ -2,7 +2,6 @@ import streamlit as st
 from services.banco import insert_denuncia
 from utils.layout import aplicar_layout
 
-# Aplica layout do sistema
 aplicar_layout()
 
 st.title("📢 Registrar Denúncia Anônima")
@@ -21,10 +20,6 @@ with st.form("form_denuncia"):
     descricao = st.text_area("Descreva o ocorrido:", height=200)
 
     enviado = st.form_submit_button("Enviar")
-
-# ---------------------------
-# PROCESSAMENTO DO FORMULÁRIO
-# ---------------------------
 
 if enviado:
     if not descricao.strip():
