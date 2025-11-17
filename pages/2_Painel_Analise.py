@@ -1,9 +1,17 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import time # Necessário para o spinner/loading
+import sys
+import os
+
+# --- CORREÇÃO DE IMPORTAÇÃO (Python Path) ---
+# Adiciona o diretório raiz do projeto ao sys.path para que módulos como 'services' sejam encontrados.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# ---------------------------------------------
+
 from services.banco import get_all_denuncias
 from utils.layout import aplicar_layout
-import time # Necessário para o spinner/loading
 
 # Aplica o layout global
 aplicar_layout()
