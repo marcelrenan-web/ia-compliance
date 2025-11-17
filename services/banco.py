@@ -2,23 +2,20 @@ from services.supabase_client import get_supabase_or_raise
 from datetime import datetime
 import uuid
 
-TABLE_NAME = "Denuncias"  # Nome exato da tabela no Supabase
+TABLE_NAME = "Denuncias"  # nome da tabela no Supabase
 
 def insert_denuncia(setor, tipo, descricao, sentimento="Neutro"):
     supabase = get_supabase_or_raise()
 
     data = {
-        "id": str(uuid.uuid4()),
+        "sua_id": str(uuid.uuid4()),
         "setor": setor,
         "tipo": tipo,
         "descricao": descricao,
         "sentimento": sentimento,
-        "data_poste": datetime.utcnow().isoformat()
+        "data_posted": datetime.utcnow().isoformat()  # nome da coluna corrigido
     }
 
-    response = supabase.table(TABLE_NAME).insert(data).execute()
+    supabase.table(TABLE_NAME).insert(data).execute()
 
-    if response.error:
-        raise Exception(response.error)
-
-    return data["id"]
+    return data["sua_id"]
