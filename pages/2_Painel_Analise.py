@@ -1,24 +1,15 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import time # Necessário para o spinner/loading
+import time 
 import sys
 import os
 
-# --- CORREÇÃO DE IMPORTAÇÃO (Python Path) ---
-# Tenta adicionar o diretório raiz do projeto ao sys.path para que 'services' e 'utils' sejam encontrados.
-# O erro persistente é quase sempre resolvido com a criação do arquivo __init__.py dentro da pasta 'services'.
-try:
-    # Resolve o caminho para o diretório raiz do projeto (o diretório pai de "pages")
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-    if root_dir not in sys.path:
-        sys.path.insert(0, root_dir)
-except NameError:
-    # Se __file__ não estiver definido (ambiente Streamlit), assume que a navegação relativa é '..'
-    sys.path.insert(0, os.path.abspath('..'))
-# ---------------------------------------------
+# --- CORREÇÃO DE CAMINHO ---
+# Garante que os módulos 'services' e 'utils' sejam encontrados a partir de 'pages'
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# ---------------------------
 
-# A IMPORTAÇÃO FINALMENTE DEVE FUNCIONAR AQUI
 from services.banco import get_all_denuncias
 from utils.layout import aplicar_layout
 
@@ -27,7 +18,6 @@ aplicar_layout()
 
 # --- 1. CONFIGURAÇÃO DE AUTENTICAÇÃO ---
 
-# Inicializar o estado de autenticação (CRUCIAL para gerenciar a sessão)
 if 'authenticated' not in st.session_state:
     st.session_state['authenticated'] = False
 
@@ -38,16 +28,14 @@ def check_login(username, password):
     """Verifica as credenciais fixas e define o estado da sessão."""
     if username == USUARIO_CORRETO and password == SENHA_CORRETA:
         st.session_state['authenticated'] = True
-        st.experimental_rerun() # Recarrega para exibir o painel
+        st.experimental_rerun() 
     else:
         st.error("Credenciais inválidas. Tente novamente.")
 
 # --- 2. CONTROLE DE ACESSO (O PORTÃO) ---
 
 if not st.session_state['authenticated']:
-    # EXIBE O FORMULÁRIO DE LOGIN se não estiver autenticado
     st.title("🔐 Acesso Restrito ao Painel de Análise")
-    st.markdown("Apenas para usuários de Compliance e RH.")
     
     with st.form("form_login"):
         username = st.text_input("Usuário:", key="login_user")
@@ -60,41 +48,36 @@ if not st.session_state['authenticated']:
 else:
     # --- 3. CONTEÚDO PRINCIPAL DO PAINEL (Se Autenticado) ---
     st.title("📊 Painel de Análise e Insights")
-    st.success(f"Bem-vindo(a), {USUARIO_CORRETO}! Dados atualizados em tempo real.")
 
-    # Função para buscar e preparar os dados (com cache para performance)
-    @st.cache_data(ttl=600) # Atualiza a cada 10 minutos
+    @st.cache_data(ttl=600) 
     def load_data():
         """Busca dados do Supabase e retorna como DataFrame."""
         try:
             data_list = get_all_denuncias()
             if data_list:
                 df = pd.DataFrame(data_list)
-                # Converte a coluna de data para o tipo datetime para análise temporal
+                # Garante que o nome da coluna é 'data_registro'
                 df['data_registro'] = pd.to_datetime(df['data_registro'])
                 return df
             return pd.DataFrame()
         except Exception as e:
-             # Este erro só aparece se o login for bem-sucedido, mas o Supabase falhar.
-             st.error(f"Falha ao carregar dados. Verifique a RLS 'SELECT' para o 'authenticated' role no Supabase. Detalhe: {e}")
+             # Este erro pode ocorrer se a RLS 'SELECT' para 'authenticated' estiver errada.
+             st.error(f"Falha ao carregar dados. Detalhe: {e}")
              return pd.DataFrame()
 
 
-    # Carrega os dados com indicador visual
     with st.spinner('Carregando e processando dados de denúncias...'):
-        time.sleep(1) # Simula o tempo de processamento
+        time.sleep(1) 
         df_denuncias = load_data()
 
     if df_denuncias.empty:
         st.warning("Nenhuma denúncia encontrada no banco de dados. Insira alguns dados na página 'Registrar Denúncia'.")
     else:
-        # TABS para organização dos gráficos
         tab1, tab2, tab3 = st.tabs(["Resumo Geral", "Distribuição por Setor", "Evolução Temporal"])
 
         with tab1:
-            st.header("Resumo de Casos por Classificação (IA)")
+            st.header("Resumo de Casos por Classificação")
             
-            # Gráfico de Barras: Denúncias por Tipo de Assédio/Ocorrência
             contagem_tipo = df_denuncias['tipo'].value_counts().reset_index()
             contagem_tipo.columns = ['Tipo de Ocorrência', 'Total de Casos']
             
@@ -108,14 +91,12 @@ else:
             )
             st.plotly_chart(fig_bar, use_container_width=True)
             
-            # KPI
             st.metric(label="Total de Denúncias Registradas", value=len(df_denuncias))
 
 
         with tab2:
             st.header("Distribuição de Ocorrências por Setor")
             
-            # Gráfico de Pizza: Denúncias por Setor
             contagem_setor = df_denuncias['setor'].value_counts().reset_index()
             contagem_setor.columns = ['Setor', 'Total']
             
@@ -132,7 +113,6 @@ else:
         with tab3:
             st.header("Evolução Mensal das Denúncias")
             
-            # Agrupamento para Evolução Temporal (Gráfico de Linha)
             df_denuncias['Mês/Ano'] = df_denuncias['data_registro'].dt.to_period('M').astype(str)
             contagem_mensal = df_denuncias.groupby('Mês/Ano').size().reset_index(name='Total')
 
@@ -147,7 +127,6 @@ else:
             st.plotly_chart(fig_line, use_container_width=True)
             
             
-    # Adicionar botão de logout
     st.markdown("---")
     if st.button("Sair (Logout)", type="secondary"):
         st.session_state['authenticated'] = False
