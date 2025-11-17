@@ -1,17 +1,20 @@
 import uuid
-from datetime import datetime
-from services.supabase_client import supabase # Importa o cliente inicializado
+from datetime import datetime, date
+from services.supabase_client import get_supabase_or_raise # Importa a função de cliente
 from postgrest.exceptions import APIError
+from typing import List, Dict, Any
 
 # Nome exato da sua tabela no Supabase
-TABLE_NAME = "denuncias"  
+TABLE_NAME = "Denuncias" 
 
-def insert_denuncia(tipo, setor, descricao, sentimento):
-    """Insere uma nova denúncia no Supabase, usando a coluna data_poste."""
-    if not supabase:
-        print("Erro: Cliente Supabase não está inicializado.")
-        return False
-        
+def insert_denuncia(setor: str, tipo: str, descricao: str, data_servico: date, sentimento: str) -> str:
+    """Insere uma nova denúncia no Supabase."""
+    try:
+        supabase = get_supabase_or_raise() # Garante que o cliente existe
+    except ConnectionError as e:
+        print(f"Erro: Cliente Supabase não está inicializado. Detalhes: {e}")
+        return "Falha na conexão"
+
     try:
         dados = {
             "id": str(uuid.uuid4()),
@@ -19,37 +22,51 @@ def insert_denuncia(tipo, setor, descricao, sentimento):
             "setor": setor,
             "descricao": descricao,
             "sentimento": sentimento,
-            # CRUCIAL: Usamos 'data_poste' para registrar a data e hora
-            "data_poste": datetime.now().isoformat()
+            # CRÍTICO: O Supabase preenche 'created_at'. Estamos apenas enviando a data do serviço.
+            "data_servico": data_servico.isoformat(), 
         }
-        
-        # O método execute() é a forma correta de interagir com o Supabase Python SDK
+
+        # Insere e retorna o resultado
         response = supabase.table(TABLE_NAME).insert(dados).execute()
         
-        # Verifica se a inserção foi bem-sucedida
+        # O Supabase retorna a linha inserida
         if response.data:
-            return True
-        return False
+            # Retorna o ID para o usuário acompanhar (opcional)
+            return response.data[0].get("id", "ID não disponível")
+        else:
+            return "Falha na inserção"
 
     except APIError as e:
-        print(f"Erro na inserção do Supabase: {e}")
-        return False
+        print(f"Erro de API ao inserir denúncia: {e}")
+        return "Erro de API"
     except Exception as e:
         print(f"Erro inesperado ao inserir denúncia: {e}")
-        return False
+        return "Erro inesperado"
 
-def get_all_denuncias():
-    """Busca todas as denúncias no Supabase."""
-    if not supabase:
-        print("Erro: Cliente Supabase não está inicializado.")
-        return []
-        
+def get_all_denuncias() -> List[Dict[str, Any]]:
+    """Busca todas as denúncias no Supabase e padroniza o nome da coluna de data."""
     try:
-        # Buscamos explicitamente todas as colunas, incluindo 'data_poste'
-        response = supabase.table(TABLE_NAME).select('*').execute()
-        return response.data if response.data else []
+        supabase = get_supabase_or_raise()
+    except ConnectionError:
+        return []
+
+    try:
+        # Busca todas as colunas
+        # Certifique-se de que a RLS (SELECT) esteja configurada corretamente para o 'authenticated' role!
+        response = supabase.table(TABLE_NAME).select("*").execute()
+        
+        data = response.data
+
+        # CRÍTICO: Mapeia o nome real da coluna 'created_at' (Supabase) para 'data_registro' (Python/Pandas)
+        for row in data:
+            if 'created_at' in row:
+                # Renomeia 'created_at' para 'data_registro' e remove o original
+                row['data_registro'] = row.pop('created_at') 
+            
+        return data
+    
     except APIError as e:
-        print(f"Erro ao buscar dados do Supabase: {e}")
+        print(f"Erro de API ao buscar denúncias: {e}")
         return []
     except Exception as e:
         print(f"Erro inesperado ao buscar denúncias: {e}")
