@@ -32,8 +32,8 @@ if enviado:
     else:
         try:
             codigo = insert_denuncia(setor, tipo, descricao)
-            st.success(f"✅ Denúncia registrada! Código de acompanhamento: **{codigo}**")
-            st.info("Anote o código para acompanhar o caso.")
+            st.success(f"✅ Denúncia registrada com sucesso!")
+            st.info(f"📌 Código de acompanhamento: **{codigo}**")
         except Exception as e:
             st.error("Erro ao registrar denúncia. Verifique as credenciais do Supabase.")
             st.write(str(e))
