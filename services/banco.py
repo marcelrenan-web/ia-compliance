@@ -1,4 +1,4 @@
-from services.supabase_client import get_supabase_or_raise # CORRIGIDO (Importação Absoluta)
+from services.supabase_client import get_supabase_or_raise # Importação Absoluta
 from datetime import datetime, date
 import uuid
 
