@@ -43,20 +43,3 @@ if enviado:
         except Exception as e:
             st.error("Erro ao registrar denúncia. Verifique as credenciais ou a política RLS 'INSERT'.")
             st.write(f"Detalhes do Erro: {str(e)}")
-    descricao = st.text_area("Descreva o ocorrido (seja detalhado, mas mantenha o foco):", height=200)
-
-    enviado = st.form_submit_button("Enviar Denúncia")
-
-if enviado:
-    if not descricao.strip():
-        st.warning("Por favor, descreva o ocorrido.")
-    else:
-        try:
-            # PASSANDO data_servico para a função
-            codigo = insert_denuncia(setor, tipo, descricao, data_servico)
-            st.success(f"✅ Denúncia registrada! Código de acompanhamento: **{codigo}**")
-            st.info("Anote o código para acompanhar o caso.")
-        except Exception as e:
-            # Mantenha o erro detalhado para debug
-            st.error("Erro ao registrar denúncia. Verifique as credenciais do Supabase e o esquema da tabela.")
-            st.write(f"Detalhes do Erro: {str(e)}")
