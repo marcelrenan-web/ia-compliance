@@ -6,10 +6,19 @@ import sys
 import os
 
 # --- CORREÇÃO DE IMPORTAÇÃO (Python Path) ---
-# Adiciona o diretório raiz do projeto ao sys.path para que módulos como 'services' sejam encontrados.
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Tenta adicionar o diretório raiz do projeto ao sys.path para que 'services' e 'utils' sejam encontrados.
+# O erro persistente é quase sempre resolvido com a criação do arquivo __init__.py dentro da pasta 'services'.
+try:
+    # Resolve o caminho para o diretório raiz do projeto (o diretório pai de "pages")
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    if root_dir not in sys.path:
+        sys.path.insert(0, root_dir)
+except NameError:
+    # Se __file__ não estiver definido (ambiente Streamlit), assume que a navegação relativa é '..'
+    sys.path.insert(0, os.path.abspath('..'))
 # ---------------------------------------------
 
+# A IMPORTAÇÃO FINALMENTE DEVE FUNCIONAR AQUI
 from services.banco import get_all_denuncias
 from utils.layout import aplicar_layout
 
@@ -54,7 +63,6 @@ else:
     st.success(f"Bem-vindo(a), {USUARIO_CORRETO}! Dados atualizados em tempo real.")
 
     # Função para buscar e preparar os dados (com cache para performance)
-    # Nota: A RLS SELECT precisa estar ativada para 'authenticated' no Supabase!
     @st.cache_data(ttl=600) # Atualiza a cada 10 minutos
     def load_data():
         """Busca dados do Supabase e retorna como DataFrame."""
@@ -67,6 +75,7 @@ else:
                 return df
             return pd.DataFrame()
         except Exception as e:
+             # Este erro só aparece se o login for bem-sucedido, mas o Supabase falhar.
              st.error(f"Falha ao carregar dados. Verifique a RLS 'SELECT' para o 'authenticated' role no Supabase. Detalhe: {e}")
              return pd.DataFrame()
 
