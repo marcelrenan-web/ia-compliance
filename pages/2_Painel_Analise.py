@@ -28,7 +28,7 @@ def check_login(username, password):
     """Verifica as credenciais fixas e define o estado da sessão."""
     if username == USUARIO_CORRETO and password == SENHA_CORRETA:
         st.session_state['authenticated'] = True
-        st.experimental_rerun() 
+        st.rerun()   # CORRIGIDO
     else:
         st.error("Credenciais inválidas. Tente novamente.")
 
@@ -56,18 +56,15 @@ else:
             data_list = get_all_denuncias()
             if data_list:
                 df = pd.DataFrame(data_list)
-                # Garante que o nome da coluna é 'data_registro'
                 df['data_registro'] = pd.to_datetime(df['data_registro'])
                 return df
             return pd.DataFrame()
         except Exception as e:
-             # Este erro pode ocorrer se a RLS 'SELECT' para 'authenticated' estiver errada.
-             st.error(f"Falha ao carregar dados. Detalhe: {e}")
-             return pd.DataFrame()
-
+            st.error(f"Falha ao carregar dados. Detalhe: {e}")
+            return pd.DataFrame()
 
     with st.spinner('Carregando e processando dados de denúncias...'):
-        time.sleep(1) 
+        time.sleep(1)
         df_denuncias = load_data()
 
     if df_denuncias.empty:
@@ -92,7 +89,6 @@ else:
             st.plotly_chart(fig_bar, use_container_width=True)
             
             st.metric(label="Total de Denúncias Registradas", value=len(df_denuncias))
-
 
         with tab2:
             st.header("Distribuição de Ocorrências por Setor")
@@ -126,8 +122,7 @@ else:
             )
             st.plotly_chart(fig_line, use_container_width=True)
             
-            
     st.markdown("---")
     if st.button("Sair (Logout)", type="secondary"):
         st.session_state['authenticated'] = False
-        st.experimental_rerun()
+        st.rerun()   # CORRIGIDO
