@@ -1,29 +1,19 @@
-from services.supabase_client import get_supabase_or_raise
-from datetime import datetime, date
-import uuid
+from supabase import create_client, Client
+import streamlit as st
 
-TABLE_NAME = "Denuncias" # Nome exatamente igual ao Supabase
-
-# Função agora recebe o novo parâmetro data_servico
-def insert_denuncia(setor, tipo, descricao, data_servico: date, sentimento="Neutro"):
-    supabase = get_supabase_or_raise()
-
-    data = {
-        "sua_id": str(uuid.uuid4()), # ID para acompanhamento
-        "setor": setor,
-        "tipo": tipo, # O tipo selecionado (Moral, Sexual, etc.)
-        "descricao": descricao,
-        "sentimento": sentimento,
-        "data_poste": datetime.utcnow().isoformat(), # Data de registro no sistema
+@st.cache_resource
+def get_supabase_or_raise() -> Client:
+    """
+    Inicializa e retorna o cliente Supabase.
+    As credenciais devem ser definidas como secrets no Streamlit.
+    """
+    try:
+        url = st.secrets["SUPABASE_URL"]
+        key = st.secrets["SUPABASE_KEY"]
+    except KeyError as e:
+        st.error(f"Erro: Credencial SUPABASE_{e.args[0].upper()} não encontrada nos segredos do Streamlit. Por favor, adicione-a.")
+        st.stop()
         
-        # CAMPO CORRIGIDO: Agora enviamos 'data_servico' para o banco
-        "data_servico": data_servico.isoformat() 
-    }
+    return create_client(url, key)
 
-    # Executa a inserção
-    # OBS: O nome 'data_poste' no código python é 'data_registro' no CSV/banco? 
-    # Mantenha a consistência entre o nome da chave python (data_poste) e o nome da coluna no Supabase.
-    supabase.table(TABLE_NAME).insert(data).execute()
-
-    # Retorna o ID para o usuário acompanhar o caso
-    return data["sua_id"]
+# OBS: Para o Streamlit Cloud, defina SUPABASE_URL e SUPABASE_KEY no arquivo .streamlit/secrets.toml
