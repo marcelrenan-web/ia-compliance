@@ -1,25 +1,32 @@
 
 import streamlit as st
-from utils.sessao import set_user, is_logged_in, logout_user
+from supabase import create_client
+import os
 
-# credenciais demo (substitua por Supabase Auth se quiser)
-ADMIN_EMAIL = "admin@example.com"
-ADMIN_PASS = "1234"
+url = os.getenv("SUPABASE_URL")
+key = os.getenv("SUPABASE_KEY")
 
-def ensure_logged_in():
-    # se já autenticado, apenas retorna
-    if is_logged_in():
-        return True
+supabase = create_client(url, key)
 
-    st.sidebar.markdown("---")
-    st.sidebar.header("🔐 Login RH/Compliance")
-    email = st.sidebar.text_input("Email", key="login_email")
-    pwd = st.sidebar.text_input("Senha", type="password", key="login_pwd")
-    if st.sidebar.button("Entrar"):
-        if email == ADMIN_EMAIL and pwd == ADMIN_PASS:
-            set_user({"email": email})
-            st.experimental_rerun()
-        else:
-            st.sidebar.error("Credenciais inválidas.")
-    # se não logou, stop para páginas privadas
-    return is_logged_in()
+def login_user(email, password):
+    try:
+        user = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        return user
+    except Exception as e:
+        st.error(f"Erro no login: {str(e)}")
+        return None
+
+def signup_user(email, password):
+    try:
+        user = supabase.auth.sign_up({"email": email, "password": password})
+        return user
+    except Exception as e:
+        st.error(f"Erro no cadastro: {str(e)}")
+        return None
+
+def logout_user():
+    try:
+        supabase.auth.sign_out()
+        st.success("Logout efetuado!")
+    except Exception as e:
+        st.error(f"Erro ao sair: {str(e)}")
