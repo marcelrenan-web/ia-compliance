@@ -1,37 +1,12 @@
-from serviços.supabase_client import supabase
-import datetime
+@@ -7,7 +7,7 @@
+# Nome exato da sua tabela no Supabase
+TABLE_NAME = "Denuncias" 
 
-# ==========================
-# FUNÇÕES DE BANCO DE DADOS
-# ==========================
-
-def insert_denuncia(setor, tipo, descricao, data_ocorrencia, anexo_url=None):
-    """
-    Insere denúncia no banco de dados.
-    setor: string
-    tipo: string
-    descricao: string
-    data_ocorrencia: datetime.date
-    anexo_url: string (opcional)
-    """
+def insert_denuncia(setor: str, tipo: str, descricao: str, data_servico: date, sentimento: str) -> str:
+def insert_denuncia(setor: str, tipo: str, descricao: str, data_servico: date, sentimento: str = "Neutro") -> str: # CORREÇÃO: 'sentimento' agora tem um valor padrão para evitar erro de argumento ausente.
+    """Insere uma nova denúncia no Supabase."""
     try:
-        data_str = data_ocorrencia.strftime("%Y-%m-%d")
-
-        dados = {
-            "setor": setor,
-            "tipo": tipo,
-            "descricao": descricao,
-            "data_ocorrencia": data_str,
-            "anexo": anexo_url
-        }
-
-        result = supabase.table("denuncias").insert(dados).execute()
-        return True, result.data
-
-    except Exception as e:
-        return False, str(e)
-
-
+        supabase = get_supabase_or_raise() # Garante que o cliente existe
 def obter_denuncias():
     """ retorna todas as denúncias em ordem cronológica inversa """
     try:
