@@ -32,7 +32,6 @@ def insert_denuncia(setor: str,
                     anexo_url: Optional[str] = None) -> Any:
     """
     Insere nova denúncia na tabela TABLE_DENUNCIAS.
-    A variável anexo_url é mapeada para a coluna 'arquivo_url'.
     """
     client = _ensure_client()
     try:
@@ -45,11 +44,14 @@ def insert_denuncia(setor: str,
         payload = {
             "setor": setor,
             "tipo": tipo,
-            "descricao": descricao,
+            # <<<< CORREÇÃO AQUI: Mapeia a variável 'descricao' para a coluna 'denuncia' >>>>
+            "denuncia": descricao, 
             "data_registro": data_str,
             "sentimento": sentimento,
-            "arquivo_url": anexo_url # <<<< CORREÇÃO FINAL: Usa 'arquivo_url'
+            "arquivo_url": anexo_url # Correção feita anteriormente
         }
+        
+        # Nota: A coluna 'categoria' que existe no DB (mas não no formulário) será nula, o que é permitido.
 
         # Executa a inserção
         resp = client.table(TABLE_DENUNCIAS).insert(payload).execute()
