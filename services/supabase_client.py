@@ -1,4 +1,5 @@
 # services/supabase_client.py
+
 import os
 import streamlit as st
 from supabase import create_client, Client
@@ -19,8 +20,6 @@ def get_supabase_client():
         key = os.environ.get("SUPABASE_KEY")
 
     if not url or not key:
-        # Não lançamos aqui — retornamos None para evitar quebrar o import
-        # O código que exigir supabase deverá verificar e mostrar mensagem de erro amigável.
         return None
 
     return create_client(url, key)
@@ -28,5 +27,23 @@ def get_supabase_client():
 def get_supabase_or_raise():
     client = get_supabase_client()
     if client is None:
-        raise RuntimeError("Supabase credentials not found. Configure SUPABASE_URL and SUPABASE_KEY in Streamlit secrets or env.")
+        raise RuntimeError(
+            """
+            ❗ Supabase client não foi configurado.
+
+            Verifique se os parâmetros estão definidos:
+
+            No Streamlit Cloud:
+                [secrets]
+                SUPABASE_URL="https://xxxxx.supabase.co"
+                SUPABASE_KEY="..."
+
+            Ou como variável de ambiente:
+                export SUPABASE_URL="..."
+                export SUPABASE_KEY="..."
+            """
+        )
     return client
+
+# ⚠️ AQUI está o conserto principal
+supabase = get_supabase_client()
