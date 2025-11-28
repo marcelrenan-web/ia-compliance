@@ -1,6 +1,9 @@
 from services.banco import insert_denuncia, upload_evidencia
 
-aplicar_layout()
+import streamlit as st
+from services.banco import insert_denuncia
+...
+# remover a linha aplicar_layout()
 
 st.title("📢 Registrar Denúncia Anônima")
 
