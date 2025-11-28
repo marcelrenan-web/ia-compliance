@@ -1,109 +1,88 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import time
-import sys
-import os
-
-# CONFIGURAÇÃO DE AMBIENTE: Isso é necessário para que a importação funcione corretamente em alguns ambientes
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# IMPORTAÇÕES ESSENCIAIS
-from utils.layout import aplicar_layout
 from services.banco import get_all_denuncias, obter_resumo_para_graficos
+from services.auth import ensure_logged_in # Presume que o arquivo services/auth.py existe
+from utils.layout import aplicar_layout
 
-# --- CHAMADA DE LAYOUT ---
-# Deve ser a primeira chamada Streamlit executável no script
 aplicar_layout()
+ensure_logged_in() # Garante que o usuário está logado
 
-# Autenticação simples (local) - mantenha/ajuste conforme seu fluxo real
-if 'authenticated' not in st.session_state:
-    st.session_state['authenticated'] = False
+st.title("📊 Painel de Análise de Denúncias")
+st.markdown("Visualize as estatísticas e os dados das denúncias registradas.")
 
-USUARIO_CORRETO = "admin"
-SENHA_CORRETA = "1234"
-
-def check_login(username, password):
-    if username == USUARIO_CORRETO and password == SENHA_CORRETA:
-        st.session_state['authenticated'] = True
-        st.rerun()
-    else:
-        st.error("Credenciais inválidas. Tente novamente.")
-
-if not st.session_state['authenticated']:
-    st.title("🔐 Acesso Restrito ao Painel de Análise")
-    with st.form("form_login"):
-        username = st.text_input("Usuário:", key="login_user")
-        password = st.text_input("Senha:", type="password", key="login_pass")
-        submitted = st.form_submit_button("Entrar")
-        if submitted:
-            check_login(username, password)
-    st.stop()
-
-# Se chegou aqui, está autenticado
-st.title("📊 Painel de Análise e Insights")
-
-# Controle manual de atualização
-col1, col2 = st.columns([1,4])
-with col1:
-    if st.button("🔄 Atualizar agora"):
-        st.experimental_rerun()
-with col2:
-    st.write("Dados carregados do Supabase (última carga ao abrir a página).")
-
-# Busca os dados SEM cache (queremos dados atualizados sempre)
+# --- Obter dados ---
 try:
-    with st.spinner("Carregando denúncias..."):
-        time.sleep(0.6)
-        dados = get_all_denuncias()
-        df = pd.DataFrame(dados) if dados else pd.DataFrame()
-        if not df.empty and 'data_registro' in df.columns:
-            # Garante que a coluna de data é um datetime para manipulação posterior
-            df['data_registro'] = pd.to_datetime(df['data_registro'], errors='coerce') 
+    dados_dict = get_all_denuncias()
+    if not dados_dict:
+        st.info("Nenhuma denúncia encontrada no banco de dados.")
+        st.stop()
+        
+    df = pd.DataFrame(dados_dict)
+    
+    # Garantindo que a coluna 'data_registro' seja do tipo datetime para gráficos
+    df['data_registro'] = pd.to_datetime(df['data_registro'])
+    
 except Exception as e:
     st.error(f"Erro ao carregar dados: {e}")
     st.stop()
 
-if df.empty:
-    st.warning("Nenhuma denúncia encontrada no banco de dados.")
-else:
-    tab1, tab2, tab3 = st.tabs(["Resumo Geral", "Distribuição por Setor", "Evolução Temporal"])
+# --- Resumo Geral ---
+resumo = obter_resumo_para_graficos()
+total_denuncias = len(df)
 
-    with tab1:
-        st.header("Resumo de Casos por Classificação")
-        contagem_tipo = df['tipo'].value_counts().reset_index()
-        contagem_tipo.columns = ['Tipo de Ocorrência', 'Total de Casos']
-        fig_bar = px.bar(contagem_tipo, x='Tipo de Ocorrência', y='Total de Casos',
-                         color='Tipo de Ocorrência', title='Denúncias por Tipo', template='plotly_white')
-        st.plotly_chart(fig_bar, use_container_width=True)
-        st.metric(label="Total de Denúncias Registradas", value=len(df))
-
-        # Lista — shows recent items
-        st.subheader("Últimas denúncias")
-        recent = df.head(10)
-        # Seleciona as colunas a serem exibidas para evitar a coluna 'anexo' ou 'anexo_url' duplicada
-        colunas_exibir = ['id', 'setor', 'tipo', 'data_registro', 'descricao']
-        st.dataframe(recent[colunas_exibir], hide_index=True)
-
-
-    with tab2:
-        st.header("Distribuição de Ocorrências por Setor")
-        contagem_setor = df['setor'].value_counts().reset_index()
-        contagem_setor.columns = ['Setor', 'Total']
-        fig_pie = px.pie(contagem_setor, names='Setor', values='Total', title='Por Setor', hole=.3, template='plotly_white')
-        st.plotly_chart(fig_pie, use_container_width=True)
-
-    with tab3:
-        st.header("Evolução Mensal das Denúncias")
-        if 'data_registro' in df.columns and df['data_registro'].notna().any():
-            df['MesAno'] = df['data_registro'].dt.to_period('M').astype(str)
-            contagem_mensal = df.groupby('MesAno').size().reset_index(name='Total')
-            fig_line = px.line(contagem_mensal, x='MesAno', y='Total', title='Evolução Mensal', markers=True, template='plotly_white')
-            st.plotly_chart(fig_line, use_container_width=True)
-        else:
-            st.info("Sem dados válidos no campo de data para plotar evolução temporal.")
+col1, col2, col3 = st.columns(3)
+col1.metric("Total de Denúncias", total_denuncias)
+# Outras métricas podem ser adicionadas aqui (ex: Tipos Únicos, Denúncias Resolvidas, etc.)
+# col2.metric("Tipos Únicos", len(resumo['por_tipo']))
+# col3.metric("Setores Envolvidos", len(resumo['por_setor']))
 
 st.markdown("---")
-if st.button("Sair (Logout)"):
-    st.session_state['authenticated'] = False
-    st.experimental_rerun()
+
+# --- Distribuição por Tipo e Setor ---
+
+st.header("Distribuição por Categoria e Setor")
+col_grafico1, col_grafico2 = st.columns(2)
+
+# Gráfico 1: Por Tipo
+df_tipo = pd.DataFrame(resumo['por_tipo'].items(), columns=['Tipo', 'Contagem'])
+fig_tipo = px.pie(df_tipo, values='Contagem', names='Tipo', title='Distribuição por Tipo de Denúncia')
+col_grafico1.plotly_chart(fig_tipo, use_container_width=True)
+
+# Gráfico 2: Por Setor
+df_setor = pd.DataFrame(resumo['por_setor'].items(), columns=['Setor', 'Contagem'])
+fig_setor = px.bar(df_setor, x='Setor', y='Contagem', title='Distribuição por Setor')
+col_grafico2.plotly_chart(fig_setor, use_container_width=True)
+
+st.markdown("---")
+
+# --- Evolução Temporal ---
+st.header("Evolução Temporal das Denúncias")
+# Agrupa por dia e conta o número de denúncias
+df_tempo = df.groupby(df['data_registro'].dt.date)['id'].count().reset_index()
+df_tempo.columns = ['Data', 'Contagem']
+
+fig_tempo = px.line(df_tempo, x='Data', y='Contagem', 
+                    title='Contagem de Denúncias ao Longo do Tempo')
+st.plotly_chart(fig_tempo, use_container_width=True)
+
+st.markdown("---")
+
+# --- Tabela de Denúncias Recentes ---
+st.header("Denúncias Recentes")
+recent = df.head(10)
+
+# Lista de colunas a exibir - AGORA SEM 'sentimento'
+colunas_exibir = [
+    "data_registro",
+    "denuncia",
+    "tipo",
+    "setor", 
+    "arquivo_url"
+]
+
+# Trata a ausência da coluna 'setor' para evitar erro se for nula
+if 'setor' not in recent.columns:
+    recent['setor'] = 'Não Informado'
+
+st.dataframe(recent[colunas_exibir], hide_index=True, use_container_width=True)
