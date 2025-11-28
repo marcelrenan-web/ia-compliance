@@ -1,16 +1,14 @@
-# services/banco.py (VERSÃO FINAL, COMPLETA E CORRIGIDA)
-
 from datetime import date, datetime
 from typing import List, Tuple, Optional, Any
 import traceback
-# Importa Streamlit, pois é usado dentro da função 'upload_evidencia'
-import streamlit as st 
+import streamlit as st
 
-# --- CONEXÃO SUPABASE ---
-# Tenta importar o cliente Supabase. Se falhar, define como None para evitar o crash imediato.
+# --- CONFIGURAÇÃO E CONEXÃO SUPABASE ---
 try:
+    # Tenta importar a variável 'supabase' do módulo cliente
     from services.supabase_client import supabase
 except Exception:
+    # Em caso de falha na importação, define como None
     supabase = None
 
 # --- CONSTANTES ---
@@ -32,9 +30,13 @@ def insert_denuncia(setor: str,
                     data_servico: date,
                     sentimento: str = "Neutro",
                     anexo_url: Optional[str] = None) -> Any:
-    """Insere nova denúncia na tabela TABLE_DENUNCIAS."""
+    """
+    Insere nova denúncia na tabela TABLE_DENUNCIAS.
+    A variável anexo_url é mapeada para a coluna 'arquivo_url'.
+    """
     client = _ensure_client()
     try:
+        # Formata a data para o padrão exigido pelo Postgres
         if isinstance(data_servico, (date, datetime)):
             data_str = data_servico.strftime("%Y-%m-%d")
         else:
@@ -46,14 +48,15 @@ def insert_denuncia(setor: str,
             "descricao": descricao,
             "data_registro": data_str,
             "sentimento": sentimento,
-            "anexo_url": anexo_url
+            "arquivo_url": anexo_url # <<<< CORREÇÃO FINAL: Usa 'arquivo_url'
         }
 
-        # Executa a inserção e retorna os dados inseridos
+        # Executa a inserção
         resp = client.table(TABLE_DENUNCIAS).insert(payload).execute()
         return resp.data[0] if hasattr(resp, "data") and resp.data else resp
 
     except Exception as e:
+        # Re-lança o erro com detalhes
         raise RuntimeError(f"Erro ao inserir denúncia: {e}\n{traceback.format_exc()}")
 
 
@@ -61,6 +64,7 @@ def get_all_denuncias() -> List[dict]:
     """Retorna todas as denúncias."""
     client = _ensure_client()
     try:
+        # Seleciona todos os dados e ordena pela ID (mais recente primeiro)
         resp = client.table(TABLE_DENUNCIAS).select("*").order('id', desc=True).execute()
         return resp.data if hasattr(resp, "data") and resp.data else []
 
@@ -87,18 +91,17 @@ def upload_evidencia(file_name: str, file_bytes: bytes, user_path: str = "") -> 
     """Upload de imagens e PDF para o Storage do Supabase."""
     client = _ensure_client()
     try:
-        # Cria um caminho único para o arquivo
+        # Cria um caminho único e usa o nome do arquivo original
         path = f"{user_path}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{file_name}"
         
-        # Realiza o upload
+        # Realiza o upload no bucket BUCKET_EVIDENCIAS
         client.storage.from_(BUCKET_EVIDENCIAS).upload(
             path, 
             file_bytes, 
             file_options={"content-type": "application/octet-stream"}
         )
-        return path # Retorna o caminho ou a URL do arquivo no bucket
+        return path 
         
     except Exception as e:
-        # Usa st.error para mostrar no Streamlit, já que estamos no contexto de uma função de página
         st.error(f"Erro ao fazer upload de evidência: {e}") 
-        return "" # Retorna vazio em caso de erro.
+        return ""
