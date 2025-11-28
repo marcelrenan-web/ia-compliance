@@ -2,14 +2,12 @@ from datetime import date, datetime
 from typing import List, Tuple, Optional, Any
 import traceback
 import streamlit as st
-import pandas as pd # Adicionei o pandas, pois pode ser útil em funções futuras
+import pandas as pd 
 
 # --- CONFIGURAÇÃO E CONEXÃO SUPABASE ---
 try:
-    # Tenta importar a variável 'supabase' do módulo cliente
     from services.supabase_client import supabase
 except Exception:
-    # Em caso de falha na importação, define como None
     supabase = None
 
 # --- CONSTANTES ---
@@ -29,7 +27,6 @@ def insert_denuncia(setor: str,
                     tipo: str,
                     descricao: str,
                     data_servico: date,
-                    # O parâmetro 'sentimento' é mantido aqui, mas não é usado no payload
                     sentimento: str = "Neutro",
                     anexo_url: Optional[str] = None) -> Any:
     """
@@ -44,12 +41,12 @@ def insert_denuncia(setor: str,
             data_str = str(data_servico)
 
         payload = {
-            "setor": setor,
+            # <<<< CORREÇÃO AQUI: Mapeia 'setor' para a coluna DB 'categoria' >>>>
+            "categoria": setor, 
             "tipo": tipo,
             # Mapeia a variável Python 'descricao' para a coluna DB 'denuncia'
             "denuncia": descricao, 
             "data_registro": data_str,
-            # A coluna 'sentimento' foi removida, pois não existe no DB
             # Mapeia a variável Python 'anexo_url' para a coluna DB 'arquivo_url'
             "arquivo_url": anexo_url 
         }
@@ -59,7 +56,6 @@ def insert_denuncia(setor: str,
         return resp.data[0] if hasattr(resp, "data") and resp.data else resp
 
     except Exception as e:
-        # Re-lança o erro com detalhes
         raise RuntimeError(f"Erro ao inserir denúncia: {e}\n{traceback.format_exc()}")
 
 
@@ -67,7 +63,6 @@ def get_all_denuncias() -> List[dict]:
     """Retorna todas as denúncias."""
     client = _ensure_client()
     try:
-        # Seleciona todos os dados e ordena pela ID (mais recente primeiro)
         resp = client.table(TABLE_DENUNCIAS).select("*").order('id', desc=True).execute()
         return resp.data if hasattr(resp, "data") and resp.data else []
 
@@ -82,7 +77,8 @@ def obter_resumo_para_graficos() -> dict:
     try:
         for item in dados:
             t = item.get("tipo", "Não informado")
-            s = item.get("setor", "Não informado")
+            # Mapeia o campo 'categoria' do DB para a chave 'por_setor' no resumo
+            s = item.get("categoria", "Não informado") 
             resumo["por_tipo"][t] = resumo["por_tipo"].get(t, 0) + 1
             resumo["por_setor"][s] = resumo["por_setor"].get(s, 0) + 1
     except Exception:
@@ -94,10 +90,8 @@ def upload_evidencia(file_name: str, file_bytes: bytes, user_path: str = "") -> 
     """Upload de imagens e PDF para o Storage do Supabase."""
     client = _ensure_client()
     try:
-        # Cria um caminho único e usa o nome do arquivo original
         path = f"{user_path}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{file_name}"
         
-        # Realiza o upload no bucket BUCKET_EVIDENCIAS
         client.storage.from_(BUCKET_EVIDENCIAS).upload(
             path, 
             file_bytes, 
