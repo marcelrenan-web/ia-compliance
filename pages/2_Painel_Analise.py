@@ -1,4 +1,3 @@
-# pages/2_Painel_Analise.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -6,12 +5,16 @@ import time
 import sys
 import os
 
+# CONFIGURAÇÃO DE AMBIENTE: Isso é necessário para que a importação funcione corretamente em alguns ambientes
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from services.banco import get_all_denuncias, obter_resumo_para_graficos
+# IMPORTAÇÕES ESSENCIAIS
 from utils.layout import aplicar_layout
+from services.banco import get_all_denuncias, obter_resumo_para_graficos
 
-
+# --- CHAMADA DE LAYOUT ---
+# Deve ser a primeira chamada Streamlit executável no script
+aplicar_layout()
 
 # Autenticação simples (local) - mantenha/ajuste conforme seu fluxo real
 if 'authenticated' not in st.session_state:
@@ -55,7 +58,8 @@ try:
         dados = get_all_denuncias()
         df = pd.DataFrame(dados) if dados else pd.DataFrame()
         if not df.empty and 'data_registro' in df.columns:
-            df['data_registro'] = pd.to_datetime(df['data_registro'], errors='coerce')
+            # Garante que a coluna de data é um datetime para manipulação posterior
+            df['data_registro'] = pd.to_datetime(df['data_registro'], errors='coerce') 
 except Exception as e:
     st.error(f"Erro ao carregar dados: {e}")
     st.stop()
@@ -77,15 +81,10 @@ else:
         # Lista — shows recent items
         st.subheader("Últimas denúncias")
         recent = df.head(10)
-        for _, row in recent.iterrows():
-            st.markdown(f"**ID:** {row.get('id','-')} • **Setor:** {row.get('setor','-')} • **Tipo:** {row.get('tipo','-')}")
-            st.write(row.get('descricao','-'))
-            anexo = row.get('anexo') or row.get('anexo_url')
-            if anexo:
-                if str(anexo).lower().endswith(".pdf"):
-                    st.markdown(f"[📎 Abrir evidência]({anexo})")
-                else:
-                    st.image(anexo, width=300)
+        # Seleciona as colunas a serem exibidas para evitar a coluna 'anexo' ou 'anexo_url' duplicada
+        colunas_exibir = ['id', 'setor', 'tipo', 'data_registro', 'descricao']
+        st.dataframe(recent[colunas_exibir], hide_index=True)
+
 
     with tab2:
         st.header("Distribuição de Ocorrências por Setor")
@@ -96,13 +95,13 @@ else:
 
     with tab3:
         st.header("Evolução Mensal das Denúncias")
-        if 'data_registro' in df.columns:
+        if 'data_registro' in df.columns and df['data_registro'].notna().any():
             df['MesAno'] = df['data_registro'].dt.to_period('M').astype(str)
             contagem_mensal = df.groupby('MesAno').size().reset_index(name='Total')
             fig_line = px.line(contagem_mensal, x='MesAno', y='Total', title='Evolução Mensal', markers=True, template='plotly_white')
             st.plotly_chart(fig_line, use_container_width=True)
         else:
-            st.info("Sem campo de data para plotar evolução temporal.")
+            st.info("Sem dados válidos no campo de data para plotar evolução temporal.")
 
 st.markdown("---")
 if st.button("Sair (Logout)"):
