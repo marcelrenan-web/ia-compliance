@@ -1,8 +1,27 @@
-# services/banco.py
-"""
-Acesso ao Supabase para operações de Denúncias e Resoluções.
-Versão corrigida – coluna correta: anexo_url
-"""
+# services/banco.py (VERSÃO CORRIGIDA)
+
+from datetime import date, datetime
+from typing import List, Tuple, Optional, Any
+import traceback
+import streamlit as st # Incluí st aqui caso 'upload_evidencia' use st.error
+
+# --- CORREÇÃO DO BLOCO DE IMPORTAÇÃO ---
+try:
+    # Tenta importar a variável 'supabase' exportada pelo supabase_client.py
+    from services.supabase_client import supabase 
+    
+    # Se 'supabase' for None (porque as chaves não foram encontradas),
+    # o try/except abaixo não dispara, mas a variável 'supabase' é definida.
+
+except Exception as e:
+    # Esta exceção só deve ocorrer se houver um erro de sintaxe/módulo grave.
+    # Se o problema for falta de keys, 'supabase' já será None pelo arquivo cliente.
+    # st.error(f"Erro fatal ao importar Supabase Client: {e}") # (Opcional)
+    supabase = None
+
+# O resto do seu código no banco.py segue abaixo...
+TABLE_DENUNCIAS = "Denuncias"
+# ...
 
 from datetime import date, datetime
 from typing import List, Tuple, Optional, Any
