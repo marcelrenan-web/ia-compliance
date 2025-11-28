@@ -1,45 +1,28 @@
-# services/banco.py (VERSÃO CORRIGIDA)
+# services/banco.py (VERSÃO FINAL, COMPLETA E CORRIGIDA)
 
 from datetime import date, datetime
 from typing import List, Tuple, Optional, Any
 import traceback
-import streamlit as st # Incluí st aqui caso 'upload_evidencia' use st.error
+# Importa Streamlit, pois é usado dentro da função 'upload_evidencia'
+import streamlit as st 
 
-# --- CORREÇÃO DO BLOCO DE IMPORTAÇÃO ---
-try:
-    # Tenta importar a variável 'supabase' exportada pelo supabase_client.py
-    from services.supabase_client import supabase 
-    
-    # Se 'supabase' for None (porque as chaves não foram encontradas),
-    # o try/except abaixo não dispara, mas a variável 'supabase' é definida.
-
-except Exception as e:
-    # Esta exceção só deve ocorrer se houver um erro de sintaxe/módulo grave.
-    # Se o problema for falta de keys, 'supabase' já será None pelo arquivo cliente.
-    # st.error(f"Erro fatal ao importar Supabase Client: {e}") # (Opcional)
-    supabase = None
-
-# O resto do seu código no banco.py segue abaixo...
-TABLE_DENUNCIAS = "Denuncias"
-# ...
-
-from datetime import date, datetime
-from typing import List, Tuple, Optional, Any
-import traceback
-
+# --- CONEXÃO SUPABASE ---
+# Tenta importar o cliente Supabase. Se falhar, define como None para evitar o crash imediato.
 try:
     from services.supabase_client import supabase
 except Exception:
     supabase = None
 
+# --- CONSTANTES ---
 TABLE_DENUNCIAS = "Denuncias"
 TABLE_RESOLUCOES = "Resolucoes"
 BUCKET_EVIDENCIAS = "evidencias"
 
 
 def _ensure_client():
+    """Garante que o cliente Supabase existe ou levanta um erro de configuração."""
     if supabase is None:
-        raise RuntimeError("Supabase client não encontrado. Verifique services/supabase_client.py")
+        raise RuntimeError("Supabase client não encontrado. Verifique services/supabase_client.py ou as credenciais.")
     return supabase
 
 
@@ -49,9 +32,7 @@ def insert_denuncia(setor: str,
                     data_servico: date,
                     sentimento: str = "Neutro",
                     anexo_url: Optional[str] = None) -> Any:
-    """
-    Insere nova denúncia na tabela TABLE_DENUNCIAS.
-    """
+    """Insere nova denúncia na tabela TABLE_DENUNCIAS."""
     client = _ensure_client()
     try:
         if isinstance(data_servico, (date, datetime)):
@@ -65,42 +46,30 @@ def insert_denuncia(setor: str,
             "descricao": descricao,
             "data_registro": data_str,
             "sentimento": sentimento,
-            "anexo_url": anexo_url  # ← CORRETO
+            "anexo_url": anexo_url
         }
 
+        # Executa a inserção e retorna os dados inseridos
         resp = client.table(TABLE_DENUNCIAS).insert(payload).execute()
-        if hasattr(resp, "data"):
-            return resp.data
-        if isinstance(resp, dict) and resp.get("data"):
-            return resp["data"]
-        return resp
+        return resp.data[0] if hasattr(resp, "data") and resp.data else resp
 
     except Exception as e:
         raise RuntimeError(f"Erro ao inserir denúncia: {e}\n{traceback.format_exc()}")
 
 
 def get_all_denuncias() -> List[dict]:
-    """
-    Retorna todas as denúncias.
-    """
+    """Retorna todas as denúncias."""
     client = _ensure_client()
     try:
         resp = client.table(TABLE_DENUNCIAS).select("*").order('id', desc=True).execute()
-
-        if hasattr(resp, "data"):
-            return resp.data or []
-        if isinstance(resp, dict) and resp.get("data"):
-            return resp["data"] or []
-        return []
+        return resp.data if hasattr(resp, "data") and resp.data else []
 
     except Exception as e:
         raise RuntimeError(f"Erro ao buscar denúncias: {e}\n{traceback.format_exc()}")
 
 
 def obter_resumo_para_graficos() -> dict:
-    """
-    Contagem por setor e tipo.
-    """
+    """Contagem por setor e tipo para o painel de análise."""
     dados = get_all_denuncias()
     resumo = {"por_tipo": {}, "por_setor": {}}
     try:
@@ -114,22 +83,22 @@ def obter_resumo_para_graficos() -> dict:
     return resumo
 
 
-# CÓDIGO CORRIGIDO
-# ... (Manter o código anterior)
 def upload_evidencia(file_name: str, file_bytes: bytes, user_path: str = "") -> str:
-    """
-    Upload de imagens e PDF para o Storage.
-    """
-    # Se você não tem certeza da implementação, use 'pass' para evitar o SyntaxError
-    # E trate o caso de não fazer o upload.
-    # Se for continuar a lógica de upload no Supabase, complete o código.
-    client = _ensure_client()
-    try:
-        # CORREÇÃO: Colocando a função para retornar uma string vazia (ou completando-a)
-        # Exemplo de como a lógica poderia ser:
-        path = f"{user_path}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{file_name}"
-        client.storage.from_(BUCKET_EVIDENCIAS).upload(path, file_bytes, {"content-type": "application/octet-stream"})
-        return path
-    except Exception as e:
-        st.error(f"Erro ao fazer upload de evidência: {e}")
-        return "" # Retorna vazio em caso de erro.
+    """Upload de imagens e PDF para o Storage do Supabase."""
+    client = _ensure_client()
+    try:
+        # Cria um caminho único para o arquivo
+        path = f"{user_path}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{file_name}"
+        
+        # Realiza o upload
+        client.storage.from_(BUCKET_EVIDENCIAS).upload(
+            path, 
+            file_bytes, 
+            file_options={"content-type": "application/octet-stream"}
+        )
+        return path # Retorna o caminho ou a URL do arquivo no bucket
+        
+    except Exception as e:
+        # Usa st.error para mostrar no Streamlit, já que estamos no contexto de uma função de página
+        st.error(f"Erro ao fazer upload de evidência: {e}") 
+        return "" # Retorna vazio em caso de erro.
