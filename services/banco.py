@@ -2,6 +2,7 @@ from datetime import date, datetime
 from typing import List, Tuple, Optional, Any
 import traceback
 import streamlit as st
+import pandas as pd # Adicionei o pandas, pois pode ser útil em funções futuras
 
 # --- CONFIGURAÇÃO E CONEXÃO SUPABASE ---
 try:
@@ -28,10 +29,11 @@ def insert_denuncia(setor: str,
                     tipo: str,
                     descricao: str,
                     data_servico: date,
+                    # O parâmetro 'sentimento' é mantido aqui, mas não é usado no payload
                     sentimento: str = "Neutro",
                     anexo_url: Optional[str] = None) -> Any:
     """
-    Insere nova denúncia na tabela TABLE_DENUNCIAS.
+    Insere nova denúncia na tabela TABLE_DENUNCIAS com mapeamento de colunas corrigido.
     """
     client = _ensure_client()
     try:
@@ -44,14 +46,13 @@ def insert_denuncia(setor: str,
         payload = {
             "setor": setor,
             "tipo": tipo,
-            # <<<< CORREÇÃO AQUI: Mapeia a variável 'descricao' para a coluna 'denuncia' >>>>
+            # Mapeia a variável Python 'descricao' para a coluna DB 'denuncia'
             "denuncia": descricao, 
             "data_registro": data_str,
-            "sentimento": sentimento,
-            "arquivo_url": anexo_url # Correção feita anteriormente
+            # A coluna 'sentimento' foi removida, pois não existe no DB
+            # Mapeia a variável Python 'anexo_url' para a coluna DB 'arquivo_url'
+            "arquivo_url": anexo_url 
         }
-        
-        # Nota: A coluna 'categoria' que existe no DB (mas não no formulário) será nula, o que é permitido.
 
         # Executa a inserção
         resp = client.table(TABLE_DENUNCIAS).insert(payload).execute()
