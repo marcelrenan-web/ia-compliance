@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from services.banco import get_all_denuncias, obter_resumo_para_graficos
 from utils.layout import aplicar_layout
 
-aplicar_layout()
+
 
 # Autenticação simples (local) - mantenha/ajuste conforme seu fluxo real
 if 'authenticated' not in st.session_state:
@@ -23,7 +23,7 @@ SENHA_CORRETA = "1234"
 def check_login(username, password):
     if username == USUARIO_CORRETO and password == SENHA_CORRETA:
         st.session_state['authenticated'] = True
-        st.experimental_rerun()
+        st.rerun()
     else:
         st.error("Credenciais inválidas. Tente novamente.")
 
