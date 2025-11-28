@@ -95,10 +95,22 @@ def obter_resumo_para_graficos() -> dict:
     return resumo
 
 
+# CÓDIGO CORRIGIDO
+# ... (Manter o código anterior)
 def upload_evidencia(file_name: str, file_bytes: bytes, user_path: str = "") -> str:
-    """
-    Upload de imagens e PDF para o Storage.
-    """
-    client = _ensure_client()
-    try:
-        prefix = f"denunc
+    """
+    Upload de imagens e PDF para o Storage.
+    """
+    # Se você não tem certeza da implementação, use 'pass' para evitar o SyntaxError
+    # E trate o caso de não fazer o upload.
+    # Se for continuar a lógica de upload no Supabase, complete o código.
+    client = _ensure_client()
+    try:
+        # CORREÇÃO: Colocando a função para retornar uma string vazia (ou completando-a)
+        # Exemplo de como a lógica poderia ser:
+        path = f"{user_path}/{datetime.now().strftime('%Y%m%d%H%M%S')}_{file_name}"
+        client.storage.from_(BUCKET_EVIDENCIAS).upload(path, file_bytes, {"content-type": "application/octet-stream"})
+        return path
+    except Exception as e:
+        st.error(f"Erro ao fazer upload de evidência: {e}")
+        return "" # Retorna vazio em caso de erro.
